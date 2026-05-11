@@ -3,7 +3,6 @@ package com.nikulin.tradingjournalcore.domain.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nikulin.tradingjournalcore.domain.entity.util.AbstractEntity;
 import com.nikulin.tradingjournalcore.infrastructure.rest.dto.DealDto;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -24,7 +23,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Deal extends AbstractEntity {
-    @Embedded
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticker_pair_id")
     private TickerPair ticker;
     private BigDecimal deposit;
     private String currency;
@@ -58,11 +58,13 @@ public class Deal extends AbstractEntity {
     }
 
     @Transient
+    @JsonIgnore
     public String getUserId() {
         return user == null ? null : user.getId();
     }
 
     @Transient
+    @JsonIgnore
     public String getAccountId() {
         return account == null ? null : account.getId();
     }

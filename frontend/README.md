@@ -1,7 +1,5 @@
 # Trading Journal Frontend
 
-React + TypeScript + Vite frontend для backend-модуля.
-
 ## Запуск
 
 ```bash

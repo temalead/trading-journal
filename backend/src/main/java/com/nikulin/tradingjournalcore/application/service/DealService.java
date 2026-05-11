@@ -19,19 +19,22 @@ public class DealService {
     private final DealRepository dealRepository;
     private final UserService userService;
     private final AccountService accountService;
+    private final TickerPairService tickerPairService;
 
     public Deal createDeal(DealDto dealDto) {
         if (dealDto == null) {
             throw new IllegalArgumentException("Deal request body is required");
         }
-        validateUserId(dealDto.getUserId());
+        var userId = dealDto.getUserId();
+        validateUserId(userId);
 
-        User user = userService.getById(dealDto.getUserId());
-        Deal deal = new Deal(dealDto);
+        var user = userService.getById(userId);
+        var deal = new Deal(dealDto);
+        deal.setTicker(tickerPairService.getOrCreate(userId, dealDto.getTicker()));
         user.addDeal(deal);
 
         if (dealDto.getAccountId() != null && !dealDto.getAccountId().isBlank()) {
-            Account account = accountService.getById(dealDto.getAccountId());
+            var account = accountService.getById(dealDto.getAccountId());
             if (account.getUser() != null && !Objects.equals(account.getUser().getId(), user.getId())) {
                 throw new IllegalArgumentException("Account does not belong to user: " + dealDto.getAccountId());
             }

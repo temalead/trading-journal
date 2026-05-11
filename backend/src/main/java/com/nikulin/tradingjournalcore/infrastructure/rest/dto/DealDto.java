@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
-@Builder
 public class DealDto {
     private TickerPair ticker;
     private BigDecimal deposit;

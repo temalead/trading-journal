@@ -1,9 +1,11 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { AuthSession, login, register } from "./api/auth";
 import { createDeal, Deal, DealResult, getDeals } from "./api/deals";
+import { createPair, getPairs, TickerPair } from "./api/pairs";
+
+type Page = "deals" | "pairs";
 
 type DealFormState = {
-  userId: string;
-  accountId: string;
   pairName: string;
   currency: string;
   deposit: string;
@@ -14,9 +16,21 @@ type DealFormState = {
   description: string;
 };
 
-const initialForm: DealFormState = {
-  userId: "",
-  accountId: "",
+type PairFormState = {
+  pairName: string;
+  icon: string;
+};
+
+type AuthFormState = {
+  mode: "login" | "register";
+  username: string;
+  email: string;
+  password: string;
+};
+
+const AUTH_STORAGE_KEY = "tradingJournal.auth";
+
+const initialDealForm: DealFormState = {
   pairName: "EURUSD",
   currency: "USD",
   deposit: "",
@@ -27,26 +41,39 @@ const initialForm: DealFormState = {
   description: "",
 };
 
+const initialPairForm: PairFormState = {
+  pairName: "",
+  icon: "",
+};
+
 export function App() {
+  const [page, setPage] = useState<Page>("deals");
   const [deals, setDeals] = useState<Deal[]>([]);
-  const [userId, setUserId] = useState("");
-  const [accountId, setAccountId] = useState("");
+  const [pairs, setPairs] = useState<TickerPair[]>([]);
+  const [session, setSession] = useState<AuthSession | null>(() => readStoredSession());
   const [search, setSearch] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [form, setForm] = useState<DealFormState>(initialForm);
+  const [dealForm, setDealForm] = useState<DealFormState>(initialDealForm);
+  const [pairForm, setPairForm] = useState<PairFormState>(initialPairForm);
+  const [authForm, setAuthForm] = useState<AuthFormState>({
+    mode: "login",
+    username: "",
+    email: "",
+    password: "",
+  });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (session) {
+      void refreshData(session);
+    }
+  }, [session]);
 
   const filteredDeals = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return deals.filter((deal) => {
-      const value = [
-        deal.ticker?.pairName,
-        deal.currency,
-        deal.description,
-        deal.result,
-        deal.accountId,
-      ]
+      const value = [deal.ticker?.pairName, deal.currency, deal.description, deal.result]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -54,17 +81,26 @@ export function App() {
     });
   }, [deals, search]);
 
-  async function loadDeals() {
-    if (!userId.trim()) {
-      showMessage("userId обязателен для загрузки сделок");
+  const filteredPairs = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return pairs.filter((pair) => [pair.pairName, pair.icon].filter(Boolean).join(" ").toLowerCase().includes(needle));
+  }, [pairs, search]);
+
+  async function refreshData(currentSession = session) {
+    if (!currentSession) {
       return;
     }
 
     setLoading(true);
     try {
-      setDeals(await getDeals(userId.trim(), accountId.trim() || undefined));
+      const [nextDeals, nextPairs] = await Promise.all([
+        getDeals(currentSession.userId, currentSession.accountId),
+        getPairs(currentSession.userId),
+      ]);
+      setDeals(nextDeals);
+      setPairs(nextPairs);
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : "Не удалось загрузить сделки");
+      showMessage(error instanceof Error ? error.message : "Unable to load data");
     } finally {
       setLoading(false);
     }
@@ -72,42 +108,92 @@ export function App() {
 
   async function submitDeal(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!form.userId.trim()) {
-      showMessage("userId обязателен");
+    if (!session) {
+      showMessage("Sign in first");
       return;
     }
 
     try {
       await createDeal({
-        ticker: { pairName: form.pairName.trim(), icon: null },
-        userId: form.userId.trim(),
-        accountId: blankToNull(form.accountId),
-        deposit: numberToNull(form.deposit),
-        currency: blankToNull(form.currency),
-        openPrice: numberToNull(form.openPrice),
-        closePrice: numberToNull(form.closePrice),
-        riskReward: blankToNull(form.riskReward),
-        result: form.result,
-        description: blankToNull(form.description),
+        ticker: { pairName: dealForm.pairName.trim(), icon: null },
+        userId: session.userId,
+        accountId: session.accountId,
+        deposit: numberToNull(dealForm.deposit),
+        currency: blankToNull(dealForm.currency),
+        openPrice: numberToNull(dealForm.openPrice),
+        closePrice: numberToNull(dealForm.closePrice),
+        riskReward: blankToNull(dealForm.riskReward),
+        result: dealForm.result,
+        description: blankToNull(dealForm.description),
       });
 
-      setUserId(form.userId.trim());
-      setAccountId(form.accountId.trim());
       setDrawerOpen(false);
-      setForm(initialForm);
-      showMessage("Сделка сохранена");
-      setDeals(await getDeals(form.userId.trim(), form.accountId.trim() || undefined));
+      setDealForm(initialDealForm);
+      showMessage("Deal saved");
+      await refreshData();
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : "Не удалось сохранить сделку");
+      showMessage(error instanceof Error ? error.message : "Unable to save deal");
     }
   }
 
+  async function submitPair(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!session) {
+      showMessage("Sign in first");
+      return;
+    }
+
+    try {
+      await createPair({
+        userId: session.userId,
+        pairName: pairForm.pairName.trim(),
+        icon: blankToNull(pairForm.icon),
+      });
+      setPairForm(initialPairForm);
+      showMessage("Pair saved");
+      setPairs(await getPairs(session.userId));
+    } catch (error) {
+      showMessage(error instanceof Error ? error.message : "Unable to save pair");
+    }
+  }
+
+  async function submitAuth(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    try {
+      const nextSession =
+        authForm.mode === "register"
+          ? await register({
+              username: authForm.username.trim(),
+              email: authForm.email.trim(),
+              password: authForm.password,
+            })
+          : await login({
+              email: authForm.email.trim(),
+              password: authForm.password,
+            });
+      saveSession(nextSession);
+      setAuthForm((current) => ({ ...current, password: "" }));
+      showMessage(authForm.mode === "register" ? "Account created" : "Signed in");
+    } catch (error) {
+      showMessage(error instanceof Error ? error.message : "Unable to sign in");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function signOut() {
+    clearStoredSession();
+    setDeals([]);
+    setPairs([]);
+    setSession(null);
+  }
+
   function openCreateDrawer() {
-    setForm((current) => ({
-      ...current,
-      userId,
-      accountId,
-    }));
+    if (!session) {
+      showMessage("Sign in first");
+      return;
+    }
     setDrawerOpen(true);
   }
 
@@ -116,182 +202,211 @@ export function App() {
     window.setTimeout(() => setMessage(""), 3600);
   }
 
+  function saveSession(nextSession: AuthSession) {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
+    setSession(nextSession);
+  }
+
+  function clearStoredSession() {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+  }
+
+  if (!session) {
+    return (
+      <main className="auth-page">
+        <section className="auth-panel">
+          <div className="brand auth-brand">
+            <div className="brand-mark">TJ</div>
+            <div>
+              <div className="brand-name">Anikulin</div>
+              <div className="brand-caption">Trading Journal</div>
+            </div>
+          </div>
+
+          <form className="auth-form" onSubmit={submitAuth}>
+            <div>
+              <h1>{authForm.mode === "register" ? "Create Account" : "Sign In"}</h1>
+              <p>Your profile data is stored in this browser after login.</p>
+            </div>
+
+            {authForm.mode === "register" && (
+              <Field
+                label="Username"
+                value={authForm.username}
+                onChange={(value) => setAuthForm((current) => ({ ...current, username: value }))}
+                required
+              />
+            )}
+            <Field
+              label="Email"
+              value={authForm.email}
+              onChange={(value) => setAuthForm((current) => ({ ...current, email: value }))}
+              type="email"
+              required
+            />
+            <Field
+              label="Password"
+              value={authForm.password}
+              onChange={(value) => setAuthForm((current) => ({ ...current, password: value }))}
+              type="password"
+              required
+            />
+            <button className="primary-button" disabled={loading} type="submit">
+              {loading ? "Please wait..." : authForm.mode === "register" ? "Create Account" : "Sign In"}
+            </button>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() =>
+                setAuthForm((current) => ({
+                  ...current,
+                  mode: current.mode === "register" ? "login" : "register",
+                }))
+              }
+            >
+              {authForm.mode === "register" ? "I Have An Account" : "Create Account"}
+            </button>
+          </form>
+        </section>
+        {message && <div className="toast show">{message}</div>}
+      </main>
+    );
+  }
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-mark">TJ</div>
           <div>
-            <div className="brand-name">HAUNTED</div>
-            <div className="brand-caption">Торговый журнал</div>
+            <div className="brand-name">Anikulin</div>
+            <div className="brand-caption">Trading Journal</div>
           </div>
         </div>
 
         <button className="primary-wide" onClick={openCreateDrawer}>
-          + Добавить сделку
+          + Add Deal
         </button>
 
         <nav className="nav-section">
           <span>Core</span>
-          <a href="/">Дашборд</a>
-          <a href="/">Аналитика</a>
-          <a className="active" href="/">
-            Сделки
-          </a>
+          <NavButton label="Dashboard" />
+          <NavButton label="Analytics" />
+          <NavButton active={page === "deals"} label="Deals" onClick={() => setPage("deals")} />
         </nav>
 
         <nav className="nav-section">
           <span>Manage</span>
-          <a href="/">Счета</a>
-          <a href="/">Программы</a>
-          <a href="/">Бэктесты</a>
+          <NavButton label="Accounts" />
+          <NavButton label="Programs" />
+          <NavButton label="Backtests" />
         </nav>
 
         <nav className="nav-section">
           <span>Library</span>
-          <a href="/">Документы</a>
-          <a href="/">Идеи</a>
-          <a href="/">Обучение</a>
-          <a href="/">Пары</a>
-          <a href="/">Сессии</a>
+          <NavButton label="Documents" />
+          <NavButton label="Ideas" />
+          <NavButton label="Education" />
+          <NavButton active={page === "pairs"} label="Pairs" onClick={() => setPage("pairs")} />
+          <NavButton label="Sessions" />
         </nav>
 
         <div className="sidebar-bottom">
-          <a href="/">Обновления</a>
-          <a href="/">Настройки</a>
-          <a href="/">Выход</a>
+          <NavButton label="Updates" />
+          <NavButton label="Settings" />
+          <button className="nav-button" onClick={signOut}>
+            Sign Out
+          </button>
         </div>
       </aside>
 
       <main className="workspace">
         <header className="topbar">
-          <button className="icon-button" aria-label="Уведомления">
+          <button className="icon-button" aria-label="Notifications">
             ⌁
           </button>
           <div className="profile">
-            <div className="avatar">AN</div>
-            <strong>Artem Nikulin</strong>
+            <div className="avatar">{profileInitials(session.username)}</div>
+            <strong>{session.username}</strong>
             <span className="status-dot" />
           </div>
         </header>
 
-        <section className="page-head">
-          <div>
-            <h1>Сделки</h1>
-            <p>Журнал сделок из backend API.</p>
-          </div>
-          <button className="primary-button" onClick={openCreateDrawer}>
-            + Добавить сделку
-          </button>
-        </section>
-
-        <section className="filters">
-          <label className="search-field">
-            <span>⌕</span>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              type="search"
-              placeholder="Поиск по паре, описанию, валюте"
-            />
-          </label>
-          <label>
-            User ID
-            <input
-              value={userId}
-              onChange={(event) => setUserId(event.target.value)}
-              placeholder="Обязательный userId"
-            />
-          </label>
-          <label>
-            Account ID
-            <input
-              value={accountId}
-              onChange={(event) => setAccountId(event.target.value)}
-              placeholder="Можно оставить пустым"
-            />
-          </label>
-          <button className="secondary-button" disabled={loading} onClick={loadDeals}>
-            {loading ? "Загрузка..." : "Загрузить"}
-          </button>
-        </section>
-
-        <section className="view-controls">
-          <div className="tabs">
-            <button>Галерея</button>
-            <button className="selected">Список</button>
-            <button>Календарь</button>
-          </div>
-          <div className="sort-box">Дата ↓</div>
-          <div className="result-box">Все результаты</div>
-          <div className="counter">{filteredDeals.length} сделок</div>
-        </section>
-
-        <section className="table-card">
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Side</th>
-                <th>Pair</th>
-                <th>Account</th>
-                <th>Result</th>
-                <th>RR</th>
-                <th>PnL</th>
-                <th>Link</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDeals.length === 0 ? (
-                <tr className="empty-row">
-                  <td colSpan={8}>Введите userId и загрузите сделки.</td>
-                </tr>
-              ) : (
-                filteredDeals.map((deal) => <DealRow deal={deal} key={deal.id ?? deal.ticker?.pairName} />)
-              )}
-            </tbody>
-          </table>
-        </section>
+        {page === "deals" ? (
+          <DealsView
+            deals={filteredDeals}
+            loading={loading}
+            onCreate={openCreateDrawer}
+            onRefresh={() => refreshData()}
+            search={search}
+            setSearch={setSearch}
+          />
+        ) : (
+          <PairsView
+            loading={loading}
+            pairForm={pairForm}
+            pairs={filteredPairs}
+            search={search}
+            setPairFormValue={setPairFormValue}
+            setSearch={setSearch}
+            submitPair={submitPair}
+          />
+        )}
 
         {drawerOpen && (
           <section className="drawer" aria-hidden={!drawerOpen}>
             <div className="drawer-panel">
               <div className="drawer-head">
                 <div>
-                  <h2>Новая сделка</h2>
-                  <p>POST /deal. userId обязателен, accountId можно оставить пустым.</p>
+                  <h2>New Deal</h2>
+                  <p>The current browser profile is attached automatically.</p>
                 </div>
-                <button className="icon-button" onClick={() => setDrawerOpen(false)} aria-label="Закрыть">
+                <button className="icon-button" onClick={() => setDrawerOpen(false)} aria-label="Close">
                   ×
                 </button>
               </div>
 
               <form className="deal-form" onSubmit={submitDeal}>
-                <Field label="User ID" value={form.userId} onChange={(value) => setFormValue("userId", value)} required />
-                <Field label="Account ID" value={form.accountId} onChange={(value) => setFormValue("accountId", value)} />
-                <Field label="Pair" value={form.pairName} onChange={(value) => setFormValue("pairName", value)} required />
-                <Field label="Currency" value={form.currency} onChange={(value) => setFormValue("currency", value)} />
-                <Field label="Deposit" value={form.deposit} onChange={(value) => setFormValue("deposit", value)} type="number" />
-                <Field label="Open price" value={form.openPrice} onChange={(value) => setFormValue("openPrice", value)} type="number" />
-                <Field label="Close price" value={form.closePrice} onChange={(value) => setFormValue("closePrice", value)} type="number" />
-                <Field label="Risk Reward" value={form.riskReward} onChange={(value) => setFormValue("riskReward", value)} />
+                <label>
+                  Pair
+                  <input
+                    list="ticker-pairs"
+                    value={dealForm.pairName}
+                    onChange={(event) => setDealFormValue("pairName", event.target.value)}
+                    required
+                  />
+                  <datalist id="ticker-pairs">
+                    {pairs.map((pair) => (
+                      <option key={pair.id ?? pair.pairName} value={pair.pairName} />
+                    ))}
+                  </datalist>
+                </label>
+                <Field label="Currency" value={dealForm.currency} onChange={(value) => setDealFormValue("currency", value)} />
+                <Field label="Deposit" value={dealForm.deposit} onChange={(value) => setDealFormValue("deposit", value)} type="number" />
+                <Field label="Open Price" value={dealForm.openPrice} onChange={(value) => setDealFormValue("openPrice", value)} type="number" />
+                <Field label="Close Price" value={dealForm.closePrice} onChange={(value) => setDealFormValue("closePrice", value)} type="number" />
+                <Field label="Risk Reward" value={dealForm.riskReward} onChange={(value) => setDealFormValue("riskReward", value)} />
                 <label>
                   Result
                   <select
-                    value={form.result}
-                    onChange={(event) => setFormValue("result", event.target.value as DealResult)}
+                    value={dealForm.result}
+                    onChange={(event) => setDealFormValue("result", event.target.value as DealResult)}
                   >
                     <option value="PROFIT">Profit</option>
-                    <option value="BE">BE</option>
+                    <option value="BE">Break Even</option>
                     <option value="LOSS">Loss</option>
                   </select>
                 </label>
                 <label className="wide">
                   Description
-                  <textarea value={form.description} onChange={(event) => setFormValue("description", event.target.value)} rows={3} />
+                  <textarea
+                    value={dealForm.description}
+                    onChange={(event) => setDealFormValue("description", event.target.value)}
+                    rows={3}
+                  />
                 </label>
                 <button className="primary-button wide" type="submit">
-                  Сохранить сделку
+                  Save Deal
                 </button>
               </form>
             </div>
@@ -303,9 +418,160 @@ export function App() {
     </div>
   );
 
-  function setFormValue<Key extends keyof DealFormState>(key: Key, value: DealFormState[Key]) {
-    setForm((current) => ({ ...current, [key]: value }));
+  function setDealFormValue<Key extends keyof DealFormState>(key: Key, value: DealFormState[Key]) {
+    setDealForm((current) => ({ ...current, [key]: value }));
   }
+
+  function setPairFormValue<Key extends keyof PairFormState>(key: Key, value: PairFormState[Key]) {
+    setPairForm((current) => ({ ...current, [key]: value }));
+  }
+}
+
+function DealsView({
+  deals,
+  loading,
+  onCreate,
+  onRefresh,
+  search,
+  setSearch,
+}: {
+  deals: Deal[];
+  loading: boolean;
+  onCreate: () => void;
+  onRefresh: () => void;
+  search: string;
+  setSearch: (value: string) => void;
+}) {
+  return (
+    <>
+      <section className="page-head">
+        <div>
+          <h1>Deals</h1>
+          <p>Journal entries from the backend API.</p>
+        </div>
+        <button className="primary-button" onClick={onCreate}>
+          + Add Deal
+        </button>
+      </section>
+
+      <section className="filters filters-compact">
+        <label className="search-field">
+          <span>⌕</span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            type="search"
+            placeholder="Search by pair, description, currency"
+          />
+        </label>
+        <button className="secondary-button" disabled={loading} onClick={onRefresh}>
+          {loading ? "Loading..." : "Refresh"}
+        </button>
+      </section>
+
+      <section className="view-controls">
+        <div className="tabs">
+          <button>Gallery</button>
+          <button className="selected">List</button>
+          <button>Calendar</button>
+        </div>
+        <div className="sort-box">Date ↓</div>
+        <div className="result-box">All Results</div>
+        <div className="counter">{deals.length} deals</div>
+      </section>
+
+      <section className="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Side</th>
+              <th>Pair</th>
+              <th>Result</th>
+              <th>RR</th>
+              <th>PnL</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            {deals.length === 0 ? (
+              <tr className="empty-row">
+                <td colSpan={7}>No deals yet.</td>
+              </tr>
+            ) : (
+              deals.map((deal) => <DealRow deal={deal} key={deal.id ?? deal.ticker?.pairName} />)
+            )}
+          </tbody>
+        </table>
+      </section>
+    </>
+  );
+}
+
+function PairsView({
+  loading,
+  pairForm,
+  pairs,
+  search,
+  setPairFormValue,
+  setSearch,
+  submitPair,
+}: {
+  loading: boolean;
+  pairForm: PairFormState;
+  pairs: TickerPair[];
+  search: string;
+  setPairFormValue: <Key extends keyof PairFormState>(key: Key, value: PairFormState[Key]) => void;
+  setSearch: (value: string) => void;
+  submitPair: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return (
+    <>
+      <section className="page-head">
+        <div>
+          <h1>Pairs</h1>
+          <p>Manage the ticker pairs available for new deals.</p>
+        </div>
+      </section>
+
+      <section className="pairs-layout">
+        <form className="pair-form" onSubmit={submitPair}>
+          <Field label="Pair Name" value={pairForm.pairName} onChange={(value) => setPairFormValue("pairName", value)} required />
+          <Field label="Icon" value={pairForm.icon} onChange={(value) => setPairFormValue("icon", value)} />
+          <button className="primary-button" disabled={loading} type="submit">
+            Save Pair
+          </button>
+        </form>
+
+        <section>
+          <section className="filters filters-compact">
+            <label className="search-field">
+              <span>⌕</span>
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                type="search"
+                placeholder="Search pairs"
+              />
+            </label>
+          </section>
+
+          <section className="pair-grid">
+            {pairs.length === 0 ? (
+              <div className="empty-card">No pairs yet.</div>
+            ) : (
+              pairs.map((pair) => (
+                <article className="pair-card" key={pair.id ?? pair.pairName}>
+                  <span className="pair-icon">{pair.icon || pairInitials(pair.pairName)}</span>
+                  <strong>{pair.pairName}</strong>
+                </article>
+              ))
+            )}
+          </section>
+        </section>
+      </section>
+    </>
+  );
 }
 
 function DealRow({ deal }: { deal: Deal }) {
@@ -324,9 +590,6 @@ function DealRow({ deal }: { deal: Deal }) {
         </div>
       </td>
       <td>
-        <span className="badge orange">{deal.accountId || "Без аккаунта"}</span>
-      </td>
-      <td>
         <span className={`badge ${view.className}`}>{view.label}</span>
       </td>
       <td>
@@ -341,6 +604,14 @@ function DealRow({ deal }: { deal: Deal }) {
         </button>
       </td>
     </tr>
+  );
+}
+
+function NavButton({ active = false, label, onClick }: { active?: boolean; label: string; onClick?: () => void }) {
+  return (
+    <button className={`nav-button ${active ? "active" : ""}`} onClick={onClick} type="button">
+      {label}
+    </button>
   );
 }
 
@@ -395,6 +666,30 @@ function formatPnl(deal: Deal) {
 
 function pairInitials(pairName?: string | null) {
   return pairName ? pairName.slice(0, 2).toUpperCase() : "FX";
+}
+
+function profileInitials(username: string) {
+  return username
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function readStoredSession() {
+  const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+  if (!stored) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(stored) as AuthSession;
+  } catch {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    return null;
+  }
 }
 
 function blankToNull(value: string) {

@@ -16,8 +16,6 @@ export type Deal = {
   description?: string | null;
   createdAt?: string | null;
   result?: DealResult | null;
-  userId?: string | null;
-  accountId?: string | null;
 };
 
 export type CreateDealPayload = {
@@ -34,12 +32,14 @@ export type CreateDealPayload = {
 };
 
 export async function getDeals(userId: string, accountId?: string): Promise<Deal[]> {
-  const params = new URLSearchParams({ userId });
+  const params = new URLSearchParams();
+  params.set("userId", userId);
   if (accountId) {
     params.set("accountId", accountId);
   }
 
-  const response = await fetch(`/api/deal?${params.toString()}`);
+  const query = params.toString();
+  const response = await fetch(`/api/deal${query ? `?${query}` : ""}`);
   if (!response.ok) {
     throw new Error(await response.text());
   }

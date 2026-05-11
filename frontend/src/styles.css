@@ -143,8 +143,7 @@ button {
   letter-spacing: 0;
 }
 
-.nav-section a,
-.sidebar-bottom a {
+.nav-button {
   display: flex;
   align-items: center;
   min-height: 34px;
@@ -156,7 +155,14 @@ button {
   text-decoration: none;
 }
 
-.nav-section a.active {
+.nav-button {
+  width: 100%;
+  border: 1px solid transparent;
+  text-align: left;
+  background: transparent;
+}
+
+.nav-button.active {
   color: #102033;
   background: #fff;
   border: 1px solid var(--line);
@@ -174,6 +180,40 @@ button {
 .workspace {
   position: relative;
   padding: 24px 26px 48px;
+}
+
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 20px;
+  background: var(--bg);
+}
+
+.auth-panel {
+  width: min(420px, 100%);
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.auth-brand {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.auth-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.auth-form p {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 .topbar {
@@ -262,8 +302,14 @@ h1 {
   margin-top: 18px;
 }
 
+.filters-compact {
+  grid-template-columns: minmax(240px, 1fr) auto;
+}
+
 .filters label,
-.deal-form label {
+.deal-form label,
+.pair-form label,
+.auth-form label {
   display: grid;
   gap: 6px;
   color: #57677e;
@@ -274,7 +320,9 @@ h1 {
 .filters input,
 .deal-form input,
 .deal-form select,
-.deal-form textarea {
+.deal-form textarea,
+.pair-form input,
+.auth-form input {
   width: 100%;
   min-height: 38px;
   border: 1px solid var(--line);
@@ -288,7 +336,9 @@ h1 {
 .filters input:focus,
 .deal-form input:focus,
 .deal-form select:focus,
-.deal-form textarea:focus {
+.deal-form textarea:focus,
+.pair-form input:focus,
+.auth-form input:focus {
   border-color: #8edff6;
   box-shadow: 0 0 0 3px rgba(11, 184, 232, 0.13);
 }
@@ -367,7 +417,7 @@ h1 {
 
 table {
   width: 100%;
-  min-width: 860px;
+  min-width: 760px;
   border-collapse: collapse;
 }
 
@@ -484,6 +534,50 @@ tbody tr:last-child td {
   grid-column: 1 / -1;
 }
 
+.pairs-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.pair-form {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.pair-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.pair-card,
+.empty-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.empty-card {
+  justify-content: center;
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .toast {
   position: fixed;
   right: 22px;
@@ -513,6 +607,10 @@ tbody tr:last-child td {
   }
 
   .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .pairs-layout {
     grid-template-columns: 1fr;
   }
 

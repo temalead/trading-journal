@@ -27,20 +27,22 @@ public class DealController {
     private final DealService dealService;
 
     @PostMapping
-    public ResponseEntity<Deal> create(@RequestBody DealDto dealDto){
+    public ResponseEntity<Deal> create(@RequestBody DealDto dealDto) {
         var deal = dealService.createDeal(dealDto);
         return new ResponseEntity<>(deal, HttpStatus.CREATED);
     }
 
     @GetMapping
     public ResponseEntity<List<Deal>> getAll(@RequestParam String userId,
-                                             @RequestParam(required = false) String accountId){
+                                             @RequestParam(required = false) String accountId) {
         return new ResponseEntity<>(dealService.getAllDeals(userId, accountId), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Deal> getById(@PathVariable String id){
+    public ResponseEntity<Deal> getById(@PathVariable String id,
+                                        @RequestParam String userId) {
         return dealService.getDealById(id)
+                .filter(deal -> userId.equals(deal.getUserId()))
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -49,4 +51,5 @@ public class DealController {
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException exception) {
         return ResponseEntity.badRequest().body(exception.getMessage());
     }
+
 }

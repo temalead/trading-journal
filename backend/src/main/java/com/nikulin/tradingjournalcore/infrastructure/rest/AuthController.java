@@ -34,8 +34,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        User user = userService.login(request.email(), request.password());
-        Account account = accountService.getOrCreatePrimaryAccount(user);
+        var user = userService.login(request.email(), request.password());
+        var account = accountService.findPrimaryAccount(user);
         return ResponseEntity.ok(toResponse(user, account));
     }
 

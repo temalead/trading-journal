@@ -3,19 +3,15 @@ package com.nikulin.tradingjournalcore.domain.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nikulin.tradingjournalcore.domain.entity.util.AbstractEntity;
 import com.nikulin.tradingjournalcore.infrastructure.rest.dto.DealDto;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Transient;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -26,15 +22,25 @@ public class Deal extends AbstractEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ticker_pair_id")
     private TickerPair ticker;
+    @Column(nullable = false)
     private BigDecimal deposit;
+    @Column(nullable = false)
     private String currency;
+    @Column(nullable = false)
     private BigDecimal openPrice;
     private BigDecimal closePrice;
+    @Column(nullable = false)
     private String riskReward;
     private String description;
-
+    private BigDecimal risk;
+    private String session;
     @Enumerated(EnumType.STRING)
     private DealResult result;
+
+    @ElementCollection
+    @CollectionTable(name = "deal_images", joinColumns = @JoinColumn(name = "deal_id"))
+    @Column(name = "image_url", nullable = false, length = 1024)
+    private List<String> imageUrls = new ArrayList<>();
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -52,9 +58,14 @@ public class Deal extends AbstractEntity {
         this.currency = dealDto.getCurrency();
         this.openPrice = dealDto.getOpenPrice();
         this.closePrice = dealDto.getClosePrice();
+        this.session = dealDto.getSession();
         this.riskReward = dealDto.getRiskReward();
         this.description = dealDto.getDescription();
         this.result = dealDto.getResult();
+    }
+
+    public void addImageUrl(String imageUrl) {
+        imageUrls.add(imageUrl);
     }
 
     @Transient

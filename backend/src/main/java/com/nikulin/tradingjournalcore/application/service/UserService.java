@@ -18,7 +18,7 @@ public class UserService {
     }
 
     public User register(String username, String email, String password) {
-        String normalizedEmail = normalizeEmail(email);
+        var normalizedEmail = normalizeEmail(email);
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new IllegalArgumentException("User with this email already exists");
         }
@@ -26,7 +26,7 @@ public class UserService {
             throw new IllegalArgumentException("Password must contain at least 6 characters");
         }
 
-        User user = new User();
+        var user = new User();
         user.setUsername(username == null || username.isBlank() ? normalizedEmail : username.trim());
         user.setEmail(normalizedEmail);
         user.setPassword(passwordService.hash(password));
@@ -34,7 +34,7 @@ public class UserService {
     }
 
     public User login(String email, String password) {
-        User user = userRepository.findByEmail(normalizeEmail(email))
+        var user = userRepository.findByEmail(normalizeEmail(email))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
         if (!passwordService.matches(password, user.getPassword())) {
             throw new IllegalArgumentException("Invalid email or password");

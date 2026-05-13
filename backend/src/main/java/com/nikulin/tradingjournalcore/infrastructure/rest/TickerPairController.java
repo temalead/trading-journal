@@ -25,8 +25,9 @@ public class TickerPairController {
     private final TickerPairService tickerPairService;
 
     @PostMapping
-    public ResponseEntity<TickerPairDto> save(@RequestBody TickerPair tickerPair) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(TickerPairDto.from(tickerPairService.save(tickerPair)));
+    public ResponseEntity<TickerPairDto> save(@RequestBody TickerPairDto tickerPairDto) {
+        TickerPairDto pair = TickerPairDto.from(tickerPairService.save(tickerPairDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(pair);
     }
 
     @GetMapping

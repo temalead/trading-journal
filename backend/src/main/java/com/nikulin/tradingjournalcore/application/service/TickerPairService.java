@@ -2,10 +2,12 @@ package com.nikulin.tradingjournalcore.application.service;
 
 import com.nikulin.tradingjournalcore.domain.entity.TickerPair;
 import com.nikulin.tradingjournalcore.infrastructure.repository.TickerPairRepository;
+import com.nikulin.tradingjournalcore.infrastructure.rest.dto.TickerPairDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -13,11 +15,12 @@ public class TickerPairService {
 
     private final TickerPairRepository repository;
 
-    public TickerPair save(TickerPair tickerPair) {
-        validate(tickerPair);
+    public TickerPair save(TickerPairDto pair) {
+        validate(pair);
+        var tickerPair = TickerPairDto.to(pair);
+
         normalize(tickerPair);
-        return repository.findByUserIdAndPairNameIgnoreCase(tickerPair.getUserId(), tickerPair.getPairName())
-                .orElseGet(() -> repository.save(tickerPair));
+        return repository.save(tickerPair);
     }
 
     public List<TickerPair> getPairs(String userId) {
@@ -25,22 +28,27 @@ public class TickerPairService {
         return repository.findAllByUserIdOrderByPairNameAsc(userId);
     }
 
-    public TickerPair getOrCreate(String userId, TickerPair tickerPair) {
+    public TickerPair getByIdForUser(String pairId, String userId) {
         validateUserId(userId);
-        if (tickerPair == null || tickerPair.getPairName() == null || tickerPair.getPairName().isBlank()) {
-            throw new IllegalArgumentException("Pair name is required");
+        if (pairId == null || pairId.isBlank()) {
+            throw new IllegalArgumentException("tickerPairId is required");
         }
 
-        tickerPair.setUserId(userId);
-        return save(tickerPair);
+        var pair = repository.findById(pairId)
+                .orElseThrow(() -> new IllegalArgumentException("Ticker pair not found: " + pairId));
+        if (!Objects.equals(pair.getUserId(), userId)) {
+            throw new IllegalArgumentException("Ticker pair does not belong to user: " + pairId);
+        }
+
+        return pair;
     }
 
-    private void validate(TickerPair tickerPair) {
+    private void validate(TickerPairDto tickerPair) {
         if (tickerPair == null) {
             throw new IllegalArgumentException("Ticker pair request body is required");
         }
-        validateUserId(tickerPair.getUserId());
-        if (tickerPair.getPairName() == null || tickerPair.getPairName().isBlank()) {
+        validateUserId(tickerPair.userId());
+        if (tickerPair.pairName() == null || tickerPair.pairName().isBlank()) {
             throw new IllegalArgumentException("Pair name is required");
         }
     }

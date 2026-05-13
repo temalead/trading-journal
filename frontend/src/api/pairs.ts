@@ -1,5 +1,6 @@
 export type TickerPair = {
   id?: string;
+  userId?: string;
   pairName: string;
   icon?: string | null;
 };

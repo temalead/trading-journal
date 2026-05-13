@@ -5,16 +5,10 @@ import com.nikulin.tradingjournalcore.domain.entity.Deal;
 import com.nikulin.tradingjournalcore.infrastructure.rest.dto.DealDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -30,6 +24,28 @@ public class DealController {
     public ResponseEntity<Deal> create(@RequestBody DealDto dealDto) {
         var deal = dealService.createDeal(dealDto);
         return new ResponseEntity<>(deal, HttpStatus.CREATED);
+    }
+
+    @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Deal> addImages(@PathVariable String id,
+                                          @RequestParam String userId,
+                                          @RequestPart("images") List<MultipartFile> images) {
+        return ResponseEntity.ok(dealService.addImages(id, userId, images));
+    }
+
+    @PutMapping
+    public ResponseEntity<Deal> update(@RequestParam String dealId,
+                                       @RequestParam String userId,
+                                       @RequestBody DealDto dealDto) {
+        var deal = dealService.update(dealId, userId, dealDto);
+        return ResponseEntity.ok(deal);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Deal> delete(@RequestParam String dealId) {
+        dealService.delete(dealId);
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping
@@ -50,6 +66,11 @@ public class DealController {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException exception) {
         return ResponseEntity.badRequest().body(exception.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> handleIllegalStateException(IllegalStateException exception) {
+        return ResponseEntity.internalServerError().body(exception.getMessage());
     }
 
 }

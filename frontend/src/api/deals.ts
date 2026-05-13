@@ -1,6 +1,8 @@
 export type DealResult = "PROFIT" | "BE" | "LOSS";
 
 export type TickerPair = {
+  id?: string;
+  userId?: string;
   pairName: string;
   icon?: string | null;
 };
@@ -8,6 +10,7 @@ export type TickerPair = {
 export type Deal = {
   id?: string;
   ticker?: TickerPair | null;
+  imageUrls?: string[];
   deposit?: number | null;
   currency?: string | null;
   openPrice?: number | null;
@@ -19,9 +22,9 @@ export type Deal = {
 };
 
 export type CreateDealPayload = {
-  ticker: TickerPair;
+  tickerPairId: string;
   userId: string;
-  accountId: string | null;
+  accountId: string;
   deposit: number | null;
   currency: string | null;
   openPrice: number | null;
@@ -54,6 +57,23 @@ export async function createDeal(payload: CreateDealPayload): Promise<Deal> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
+  return response.json() as Promise<Deal>;
+}
+
+export async function uploadDealImages(dealId: string, userId: string, images: File[]): Promise<Deal> {
+  const params = new URLSearchParams({ userId });
+  const formData = new FormData();
+  images.forEach((image) => formData.append("images", image));
+
+  const response = await fetch(`/api/deal/${dealId}/images?${params.toString()}`, {
+    method: "POST",
+    body: formData,
   });
 
   if (!response.ok) {

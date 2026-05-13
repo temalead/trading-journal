@@ -2,15 +2,17 @@ package com.nikulin.tradingjournalcore.infrastructure.rest.dto;
 
 import com.nikulin.tradingjournalcore.domain.entity.DealResult;
 import com.nikulin.tradingjournalcore.domain.entity.TickerPair;
-import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class DealDto {
     private TickerPair ticker;
+    private String tickerPairId;
     private BigDecimal deposit;
     private String currency;
     private BigDecimal openPrice;
@@ -19,6 +21,8 @@ public class DealDto {
     private String description;
     private LocalDateTime createdAt;
     private DealResult result;
+    private String session;
+    private List<String> imageUrls = new ArrayList<>();
     private String userId;
     private String accountId;
 }

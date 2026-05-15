@@ -20,7 +20,8 @@ public class TickerPairService {
         var tickerPair = TickerPairDto.to(pair);
 
         normalize(tickerPair);
-        return repository.save(tickerPair);
+        return repository.findByUserIdAndPairNameIgnoreCase(tickerPair.getUserId(), tickerPair.getPairName())
+                .orElseGet(() -> repository.save(tickerPair));
     }
 
     public List<TickerPair> getPairs(String userId) {

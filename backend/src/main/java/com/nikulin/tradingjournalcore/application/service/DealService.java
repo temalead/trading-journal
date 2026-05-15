@@ -87,7 +87,15 @@ public class DealService {
     }
 
     public Deal update(String dealId, String userId, DealDto dealDto) {
-        var deal = dealRepository.findById(dealId).orElseThrow();
+        validateUserId(userId);
+        if (dealDto == null) {
+            throw new IllegalArgumentException("Deal request body is required");
+        }
+        var deal = dealRepository.findById(dealId)
+                .orElseThrow(() -> new IllegalArgumentException("Deal not found: " + dealId));
+        if (!Objects.equals(deal.getUserId(), userId)) {
+            throw new IllegalArgumentException("Deal does not belong to user: " + dealId);
+        }
         deal.setTicker(tickerPairService.getByIdForUser(dealDto.getTickerPairId(), userId));
         deal.setCurrency(dealDto.getCurrency());
         deal.setRiskReward(dealDto.getRiskReward());
@@ -97,8 +105,7 @@ public class DealService {
         deal.setResult(dealDto.getResult());
         deal.setDeposit(dealDto.getDeposit());
 
-        dealRepository.save(deal);
-        return deal;
+        return dealRepository.save(deal);
     }
 
     public void delete(String dealId) {

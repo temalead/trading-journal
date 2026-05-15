@@ -24,6 +24,9 @@ public class AccountService {
     }
 
     public Account createDefaultAccount(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User is required");
+        }
         var account = new Account();
         account.setActive(true);
         account.setProp(false);
@@ -33,30 +36,44 @@ public class AccountService {
     }
 
     public List<Account> findAllAccounts(String userId) {
+        validateUserId(userId);
         return accountRepository.findByUserId(userId);
     }
 
     public Account findPrimaryAccount(User user) {
+        if (user == null || user.getId() == null || user.getId().isBlank()) {
+            throw new IllegalArgumentException("User is required");
+        }
         return accountRepository.findByUserId(user.getId(), false).stream().findAny()
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalArgumentException("Primary account not found for user: " + user.getId()));
     }
 
     public List<Account> findPropAccounts(String userId) {
+        validateUserId(userId);
         return accountRepository.findByUserId(userId, true);
     }
 
     public Account createAccount(String userId, CreateAccountDto accountDto) {
+        validateUserId(userId);
+        if (accountDto == null) {
+            throw new IllegalArgumentException("Account request body is required");
+        }
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         var account = new Account();
         account.setActive(true);
         account.setProp(accountDto.isProp());
         account.setDeposit(accountDto.getDeposit());
-        account.setUser(user);
         account.setPropDeposit(accountDto.getPropDeposit());
         account.setPropName(accountDto.getPropName());
-        accountRepository.save(account);
+        user.addAccount(account);
 
-        return account;
+        return accountRepository.save(account);
+    }
+
+    private void validateUserId(String userId) {
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException("userId is required");
+        }
     }
 }

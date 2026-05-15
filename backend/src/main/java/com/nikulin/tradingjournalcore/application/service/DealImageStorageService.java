@@ -1,12 +1,6 @@
 package com.nikulin.tradingjournalcore.application.service;
 
-import io.minio.BucketExistsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.SetBucketPolicyArgs;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import com.nikulin.tradingjournalcore.application.service.storage.DealImageClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,28 +9,18 @@ import java.util.Locale;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class DealImageStorageService {
 
-    @Value("${storage.s3.endpoint}")
-    private String endpoint;
-    @Value("${storage.s3.public-base-url}")
-    private String publicBaseUrl;
-    @Value("${storage.s3.access-key}")
-    private String accessKey;
-    @Value("${storage.s3.secret-key}")
-    private String secretKey;
-    @Value("${storage.s3.bucket}")
-    private String bucket;
+    private final DealImageClient dealImageClient;
+    private final String publicBaseUrl;
+    private final String bucket;
 
-    private MinioClient minioClient;
-
-    @PostConstruct
-    void init() {
-        minioClient = MinioClient.builder()
-                .endpoint(endpoint)
-                .credentials(accessKey, secretKey)
-                .build();
+    public DealImageStorageService(DealImageClient dealImageClient,
+                                   @Value("${storage.s3.public-base-url}") String publicBaseUrl,
+                                   @Value("${storage.s3.bucket}") String bucket) {
+        this.dealImageClient = dealImageClient;
+        this.publicBaseUrl = publicBaseUrl;
+        this.bucket = bucket;
     }
 
     public String uploadDealImage(String userId, String dealId, MultipartFile image) {
@@ -50,36 +34,15 @@ public class DealImageStorageService {
                 extension(image.getOriginalFilename())
         );
 
-        try {
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket(bucket)
-                            .object(objectName)
-                            .stream(image.getInputStream(), image.getSize(), -1)
-                            .contentType(image.getContentType())
-                            .build()
-            );
-            return publicBaseUrl.replaceAll("/$", "") + "/" + bucket + "/" + objectName;
-        } catch (Exception exception) {
-            throw new IllegalStateException("Unable to upload deal image", exception);
-        }
+        dealImageClient.upload(bucket, objectName, image);
+        return publicBaseUrl.replaceAll("/$", "") + "/" + bucket + "/" + objectName;
     }
 
     private void ensureBucket() {
-        try {
-            var exists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
-            if (!exists) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
-            }
-            minioClient.setBucketPolicy(
-                    SetBucketPolicyArgs.builder()
-                            .bucket(bucket)
-                            .config(publicReadPolicy())
-                            .build()
-            );
-        } catch (Exception exception) {
-            throw new IllegalStateException("Unable to initialize image bucket", exception);
+        if (!dealImageClient.bucketExists(bucket)) {
+            dealImageClient.createBucket(bucket);
         }
+        dealImageClient.setPublicReadPolicy(bucket, publicReadPolicy());
     }
 
     private String publicReadPolicy() {

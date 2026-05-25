@@ -167,8 +167,6 @@ class DealServiceTest {
         dto.setTickerPairId("pair-1");
         dto.setDeposit(BigDecimal.valueOf(1000));
         dto.setCurrency("USD");
-        dto.setOpenPrice(BigDecimal.valueOf(1.1));
-        dto.setClosePrice(BigDecimal.valueOf(1.2));
         dto.setRiskReward("2R");
         dto.setResult(DealResult.PROFIT);
         dto.setDescription("description");

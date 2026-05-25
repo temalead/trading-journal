@@ -1,3 +1,11 @@
+import { AuthSession } from "./auth";
+
+export function authHeaders(session: AuthSession): HeadersInit {
+  return {
+    Authorization: `${session.tokenType || "Bearer"} ${session.accessToken}`,
+  };
+}
+
 export async function parseJsonResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get("content-type") ?? "";
 

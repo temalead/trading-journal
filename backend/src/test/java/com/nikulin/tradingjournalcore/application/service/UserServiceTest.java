@@ -53,6 +53,7 @@ class UserServiceTest {
         assertThat(user.getUsername()).isEqualTo("Tema");
         assertThat(user.getEmail()).isEqualTo("test@example.com");
         assertThat(user.getPassword()).isEqualTo("hashed");
+        assertThat(user.getRoles()).containsExactly(User.Role.USER);
         verify(userRepository).save(user);
     }
 

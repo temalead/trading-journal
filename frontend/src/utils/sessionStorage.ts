@@ -9,7 +9,12 @@ export function readStoredSession() {
   }
 
   try {
-    return JSON.parse(stored) as AuthSession;
+    const session = JSON.parse(stored) as AuthSession;
+    if (!session.accessToken) {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      return null;
+    }
+    return session;
   } catch {
     localStorage.removeItem(AUTH_STORAGE_KEY);
     return null;

@@ -1,0 +1,325 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-users
+      author: anikulin
+      failOnError: true
+      preConditions:
+        - onFail: MARK_RAN
+        - "not":
+            - tableExists:
+                tableName: users
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: varchar(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+              - column:
+                  name: updated_at
+                  type: timestamp
+              - column:
+                  name: username
+                  type: varchar(255)
+              - column:
+                  name: password
+                  type: varchar(255)
+              - column:
+                  name: email
+                  type: varchar(255)
+        - addUniqueConstraint:
+            tableName: users
+            columnNames: email
+            constraintName: uk_users_email
+
+  - changeSet:
+      id: 002-create-user-roles
+      author: anikulin
+      failOnError: true
+      preConditions:
+        - onFail: MARK_RAN
+        - "not":
+            - tableExists:
+                tableName: user_roles
+      changes:
+        - createTable:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+        - addPrimaryKey:
+            tableName: user_roles
+            columnNames: user_id, role
+            constraintName: pk_user_roles
+        - addForeignKeyConstraint:
+            baseTableName: user_roles
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_user_roles_user
+            onDelete: CASCADE
+        - sql:
+            sql: |
+              alter table user_roles
+                  add constraint ck_user_roles_role
+                  check (role in ('ADMIN', 'SUPPORT', 'USER'));
+
+  - changeSet:
+      id: 003-create-account
+      failOnError: true
+      author: anikulin
+      preConditions:
+        - onFail: MARK_RAN
+        - "not":
+            - tableExists:
+                tableName: account
+      changes:
+        - createTable:
+            tableName: account
+            columns:
+              - column:
+                  name: id
+                  type: varchar(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+              - column:
+                  name: updated_at
+                  type: timestamp
+              - column:
+                  name: active
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_prop
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: prop_name
+                  type: varchar(255)
+              - column:
+                  name: prop_deposit
+                  type: numeric(19, 2)
+              - column:
+                  name: deposit
+                  type: numeric(19, 2)
+              - column:
+                  name: user_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: account
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_account_user
+        - createIndex:
+            tableName: account
+            indexName: idx_account_user_id
+            columns:
+              - column:
+                  name: user_id
+
+  - changeSet:
+      id: 004-create-ticker-pairs
+      author: anikulin
+      preConditions:
+        - "not":
+            - tableExists:
+                tableName: ticker_pairs
+      changes:
+        - createTable:
+            tableName: ticker_pairs
+            columns:
+              - column:
+                  name: id
+                  type: varchar(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+              - column:
+                  name: updated_at
+                  type: timestamp
+              - column:
+                  name: user_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pair_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: icon
+                  type: varchar(255)
+        - addUniqueConstraint:
+            tableName: ticker_pairs
+            columnNames: user_id, pair_name
+            constraintName: uk_ticker_pairs_user_pair_name
+        - createIndex:
+            tableName: ticker_pairs
+            indexName: idx_ticker_pairs_user_id
+            columns:
+              - column:
+                  name: user_id
+
+  - changeSet:
+      id: 005-create-deal
+      author: anikulin
+      preConditions:
+        - "not":
+            - tableExists:
+                tableName: deal
+      changes:
+        - createTable:
+            tableName: deal
+            columns:
+              - column:
+                  name: id
+                  type: varchar(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+              - column:
+                  name: updated_at
+                  type: timestamp
+              - column:
+                  name: ticker_pair_id
+                  type: varchar(36)
+              - column:
+                  name: deposit
+                  type: numeric(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: open_price
+                  type: numeric(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: close_price
+                  type: numeric(19, 2)
+              - column:
+                  name: risk_reward
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(255)
+              - column:
+                  name: risk
+                  type: numeric(19, 2)
+              - column:
+                  name: session
+                  type: varchar(255)
+              - column:
+                  name: result
+                  type: varchar(255)
+              - column:
+                  name: user_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: account_id
+                  type: varchar(36)
+        - addForeignKeyConstraint:
+            baseTableName: deal
+            baseColumnNames: ticker_pair_id
+            referencedTableName: ticker_pairs
+            referencedColumnNames: id
+            constraintName: fk_deal_ticker_pair
+        - addForeignKeyConstraint:
+            baseTableName: deal
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_deal_user
+        - addForeignKeyConstraint:
+            baseTableName: deal
+            baseColumnNames: account_id
+            referencedTableName: account
+            referencedColumnNames: id
+            constraintName: fk_deal_account
+        - createIndex:
+            tableName: deal
+            indexName: idx_deal_user_id
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            tableName: deal
+            indexName: idx_deal_account_id
+            columns:
+              - column:
+                  name: account_id
+
+  - changeSet:
+      id: 006-create-deal-images
+      author: anikulin
+      preConditions:
+        - "not":
+            - tableExists:
+                tableName: deal_images
+      changes:
+        - createTable:
+            tableName: deal_images
+            columns:
+              - column:
+                  name: deal_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: image_url
+                  type: varchar(1024)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: deal_images
+            baseColumnNames: deal_id
+            referencedTableName: deal
+            referencedColumnNames: id
+            constraintName: fk_deal_images_deal
+            onDelete: CASCADE
+        - createIndex:
+            tableName: deal_images
+            indexName: idx_deal_images_deal_id
+            columns:
+              - column:
+                  name: deal_id

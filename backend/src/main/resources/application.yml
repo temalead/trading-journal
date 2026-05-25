@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: trading-journal-core
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/trading_journal
+    username: trading
+    password: trading
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+app:
+  cors:
+    allowed-origins: http://localhost:5173,http://127.0.0.1:5173
+  security:
+    jwt:
+      secret: local-development-jwt-secret-change-me-please-32chars
+      expires-in-seconds: 86400
+storage:
+  s3:
+    secret-key: trading-secret
+    public-base-url: http://localhost:9000
+    bucket: trading-journal-images
+    endpoint: http://localhost:9000
+    access-key: trading

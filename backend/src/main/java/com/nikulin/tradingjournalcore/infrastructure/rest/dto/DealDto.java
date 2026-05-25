@@ -15,8 +15,6 @@ public class DealDto {
     private String tickerPairId;
     private BigDecimal deposit;
     private String currency;
-    private BigDecimal openPrice;
-    private BigDecimal closePrice;
     private String riskReward;
     private String description;
     private LocalDateTime createdAt;

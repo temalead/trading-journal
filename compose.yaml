@@ -1,9 +1,0 @@
-services:
-  postgres:
-    image: 'postgres:17.9'
-    environment:
-      - 'POSTGRES_DB=trading_journal'
-      - 'POSTGRES_PASSWORD=trading'
-      - 'POSTGRES_USER=trading'
-    ports:
-      - '5432'

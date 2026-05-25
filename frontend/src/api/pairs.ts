@@ -1,3 +1,6 @@
+import { AuthSession } from "./auth";
+import { authHeaders } from "./request";
+
 export type TickerPair = {
   id?: string;
   userId?: string;
@@ -11,9 +14,11 @@ export type CreateTickerPairPayload = {
   icon: string | null;
 };
 
-export async function getPairs(userId: string): Promise<TickerPair[]> {
+export async function getPairs(userId: string, session: AuthSession): Promise<TickerPair[]> {
   const params = new URLSearchParams({ userId });
-  const response = await fetch(`/api/pair?${params.toString()}`);
+  const response = await fetch(`/api/pair?${params.toString()}`, {
+    headers: authHeaders(session),
+  });
 
   if (!response.ok) {
     throw new Error(await response.text());
@@ -22,10 +27,11 @@ export async function getPairs(userId: string): Promise<TickerPair[]> {
   return response.json() as Promise<TickerPair[]>;
 }
 
-export async function createPair(payload: CreateTickerPairPayload): Promise<TickerPair> {
+export async function createPair(payload: CreateTickerPairPayload, session: AuthSession): Promise<TickerPair> {
   const response = await fetch("/api/pair", {
     method: "POST",
     headers: {
+      ...authHeaders(session),
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),

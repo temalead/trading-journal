@@ -73,8 +73,8 @@ export function App() {
     setLoading(true);
     try {
       const [nextDeals, nextPairs] = await Promise.all([
-        getDeals(currentSession.userId, currentSession.accountId),
-        getPairs(currentSession.userId),
+        getDeals(currentSession.userId, currentSession.accountId, currentSession),
+        getPairs(currentSession.userId, currentSession),
       ]);
       setDeals(nextDeals);
       setPairs(nextPairs);
@@ -98,23 +98,26 @@ export function App() {
     }
 
     try {
-      const savedDeal = await createDeal({
-        tickerPairId: dealForm.tickerPairId,
-        userId: session.userId,
-        accountId: session.accountId,
-        deposit: numberToNull(dealForm.deposit),
-        currency: blankToNull(dealForm.currency),
-        openPrice: numberToNull(dealForm.openPrice),
-        closePrice: numberToNull(dealForm.closePrice),
-        riskReward: blankToNull(dealForm.riskReward),
-        result: dealForm.result,
-        description: blankToNull(dealForm.description),
-      });
+      const savedDeal = await createDeal(
+        {
+          tickerPairId: dealForm.tickerPairId,
+          userId: session.userId,
+          accountId: session.accountId,
+          deposit: numberToNull(dealForm.deposit),
+          currency: blankToNull(dealForm.currency),
+          openPrice: numberToNull(dealForm.openPrice),
+          closePrice: numberToNull(dealForm.closePrice),
+          riskReward: blankToNull(dealForm.riskReward),
+          result: dealForm.result,
+          description: blankToNull(dealForm.description),
+        },
+        session,
+      );
       if (dealForm.imageFiles.length > 0) {
         if (!savedDeal.id) {
           throw new Error("Deal was saved without id");
         }
-        await uploadDealImages(savedDeal.id, session.userId, dealForm.imageFiles);
+        await uploadDealImages(savedDeal.id, session.userId, dealForm.imageFiles, session);
       }
 
       setDrawerOpen(false);
@@ -134,14 +137,17 @@ export function App() {
     }
 
     try {
-      await createPair({
-        userId: session.userId,
-        pairName: pairForm.pairName.trim(),
-        icon: blankToNull(pairForm.icon),
-      });
+      await createPair(
+        {
+          userId: session.userId,
+          pairName: pairForm.pairName.trim(),
+          icon: blankToNull(pairForm.icon),
+        },
+        session,
+      );
       setPairForm(initialPairForm);
       showMessage("Pair saved");
-      setPairs(await getPairs(session.userId));
+      setPairs(await getPairs(session.userId, session));
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Unable to save pair");
     }

@@ -5,6 +5,8 @@ import com.nikulin.tradingjournalcore.infrastructure.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -27,6 +29,7 @@ public class UserService {
         }
 
         var user = new User();
+        user.setRoles(Set.of(User.Role.USER));
         user.setUsername(username == null || username.isBlank() ? normalizedEmail : username.trim());
         user.setEmail(normalizedEmail);
         user.setPassword(passwordService.hash(password));

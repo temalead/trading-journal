@@ -1,3 +1,6 @@
+import { AuthSession } from "./auth";
+import { authHeaders } from "./request";
+
 export type DealResult = "PROFIT" | "BE" | "LOSS";
 
 export type TickerPair = {
@@ -34,7 +37,7 @@ export type CreateDealPayload = {
   result: DealResult;
 };
 
-export async function getDeals(userId: string, accountId?: string): Promise<Deal[]> {
+export async function getDeals(userId: string, accountId: string | undefined, session: AuthSession): Promise<Deal[]> {
   const params = new URLSearchParams();
   params.set("userId", userId);
   if (accountId) {
@@ -42,7 +45,9 @@ export async function getDeals(userId: string, accountId?: string): Promise<Deal
   }
 
   const query = params.toString();
-  const response = await fetch(`/api/deal${query ? `?${query}` : ""}`);
+  const response = await fetch(`/api/deal${query ? `?${query}` : ""}`, {
+    headers: authHeaders(session),
+  });
   if (!response.ok) {
     throw new Error(await response.text());
   }
@@ -50,10 +55,11 @@ export async function getDeals(userId: string, accountId?: string): Promise<Deal
   return response.json() as Promise<Deal[]>;
 }
 
-export async function createDeal(payload: CreateDealPayload): Promise<Deal> {
+export async function createDeal(payload: CreateDealPayload, session: AuthSession): Promise<Deal> {
   const response = await fetch("/api/deal", {
     method: "POST",
     headers: {
+      ...authHeaders(session),
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -66,13 +72,19 @@ export async function createDeal(payload: CreateDealPayload): Promise<Deal> {
   return response.json() as Promise<Deal>;
 }
 
-export async function uploadDealImages(dealId: string, userId: string, images: File[]): Promise<Deal> {
+export async function uploadDealImages(
+  dealId: string,
+  userId: string,
+  images: File[],
+  session: AuthSession,
+): Promise<Deal> {
   const params = new URLSearchParams({ userId });
   const formData = new FormData();
   images.forEach((image) => formData.append("images", image));
 
   const response = await fetch(`/api/deal/${dealId}/images?${params.toString()}`, {
     method: "POST",
+    headers: authHeaders(session),
     body: formData,
   });
 

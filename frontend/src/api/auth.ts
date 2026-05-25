@@ -3,6 +3,10 @@ export type AuthSession = {
   accountId: string;
   username: string;
   email: string;
+  roles: string[];
+  accessToken: string;
+  tokenType: string;
+  expiresInSeconds: number;
 };
 
 export type LoginPayload = {

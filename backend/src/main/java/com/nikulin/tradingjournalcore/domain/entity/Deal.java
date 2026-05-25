@@ -27,9 +27,6 @@ public class Deal extends AbstractEntity {
     @Column(nullable = false)
     private String currency;
     @Column(nullable = false)
-    private BigDecimal openPrice;
-    private BigDecimal closePrice;
-    @Column(nullable = false)
     private String riskReward;
     private String description;
     private BigDecimal risk;
@@ -56,8 +53,6 @@ public class Deal extends AbstractEntity {
         this.ticker = dealDto.getTicker();
         this.deposit = dealDto.getDeposit();
         this.currency = dealDto.getCurrency();
-        this.openPrice = dealDto.getOpenPrice();
-        this.closePrice = dealDto.getClosePrice();
         this.session = dealDto.getSession();
         this.riskReward = dealDto.getRiskReward();
         this.description = dealDto.getDescription();

@@ -2,6 +2,7 @@ package com.nikulin.tradingjournalcore.application.service;
 
 import com.nikulin.tradingjournalcore.domain.entity.Account;
 import com.nikulin.tradingjournalcore.domain.entity.Deal;
+import com.nikulin.tradingjournalcore.domain.entity.DealLink;
 import com.nikulin.tradingjournalcore.domain.entity.DealResult;
 import com.nikulin.tradingjournalcore.domain.entity.TickerPair;
 import com.nikulin.tradingjournalcore.domain.entity.User;
@@ -57,6 +58,9 @@ class DealServiceTest {
         assertThat(deal.getUser()).isSameAs(user);
         assertThat(deal.getAccount()).isSameAs(account);
         assertThat(deal.getTicker()).isSameAs(pair);
+        assertThat(deal.getLinks())
+                .extracting(DealLink::getTitle, DealLink::getUrl)
+                .containsExactly(assertThatLink("TradingView", "https://tradingview.com/chart/1"));
         assertThat(user.getDeals()).contains(deal);
         assertThat(account.getDeals()).contains(deal);
     }
@@ -156,9 +160,15 @@ class DealServiceTest {
 
     @Test
     void deleteDelegatesToRepository() {
-        dealService.delete("deal-1");
+        var user = user("user-1");
+        var deal = new Deal();
+        deal.setId("deal-1");
+        user.addDeal(deal);
+        when(dealRepository.findById("deal-1")).thenReturn(Optional.of(deal));
 
-        verify(dealRepository).deleteById("deal-1");
+        dealService.delete("deal-1", "user-1");
+
+        verify(dealRepository).delete(deal);
     }
 
     private DealDto dealDto() {
@@ -170,7 +180,12 @@ class DealServiceTest {
         dto.setRiskReward("2R");
         dto.setResult(DealResult.PROFIT);
         dto.setDescription("description");
+        dto.setLinks(List.of(new DealLink("TradingView", "https://tradingview.com/chart/1")));
         return dto;
+    }
+
+    private static org.assertj.core.groups.Tuple assertThatLink(String title, String url) {
+        return org.assertj.core.api.Assertions.tuple(title, url);
     }
 
     private User user(String id) {

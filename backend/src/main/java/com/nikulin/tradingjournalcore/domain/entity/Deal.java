@@ -30,7 +30,7 @@ public class Deal extends AbstractEntity {
     private String riskReward;
     private String description;
     private BigDecimal risk;
-    private String session;
+    private DealSession session;
     @Enumerated(EnumType.STRING)
     private DealResult result;
 
@@ -38,6 +38,11 @@ public class Deal extends AbstractEntity {
     @CollectionTable(name = "deal_images", joinColumns = @JoinColumn(name = "deal_id"))
     @Column(name = "image_url", nullable = false, length = 1024)
     private List<String> imageUrls = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "deal_links", joinColumns = @JoinColumn(name = "deal_id"))
+    @OrderColumn(name = "position")
+    private List<DealLink> links = new ArrayList<>();
 
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -57,10 +62,15 @@ public class Deal extends AbstractEntity {
         this.riskReward = dealDto.getRiskReward();
         this.description = dealDto.getDescription();
         this.result = dealDto.getResult();
+        setLinks(dealDto.getLinks());
     }
 
     public void addImageUrl(String imageUrl) {
         imageUrls.add(imageUrl);
+    }
+
+    public void setLinks(List<DealLink> links) {
+        this.links = links == null ? new ArrayList<>() : new ArrayList<>(links);
     }
 
     @Transient

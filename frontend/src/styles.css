@@ -235,6 +235,16 @@ button {
   background: #fff;
 }
 
+.icon-button.link-action {
+  text-decoration: none;
+}
+
+.icon-button.danger {
+  color: var(--red);
+  background: var(--red-soft);
+  border-color: #ffd2d2;
+}
+
 .profile {
   display: flex;
   align-items: center;
@@ -324,12 +334,12 @@ h1 {
 .pair-form input,
 .auth-form input {
   width: 100%;
-  min-height: 38px;
-  border: 1px solid var(--line);
+  min-height: 42px;
+  border: 1px solid #cfe9fb;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 9px 12px;
   color: var(--text);
-  background: #fff;
+  background: #fbfdff;
   outline: none;
 }
 
@@ -417,7 +427,7 @@ h1 {
 
 table {
   width: 100%;
-  min-width: 760px;
+  min-width: 960px;
   border-collapse: collapse;
 }
 
@@ -497,6 +507,12 @@ tbody tr:last-child td {
   object-fit: cover;
 }
 
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .pair-icon {
   display: grid;
   place-items: center;
@@ -518,19 +534,23 @@ tbody tr:last-child td {
   position: fixed;
   inset: 0;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
   z-index: 20;
-  background: rgba(8, 23, 42, 0.28);
+  padding: 24px;
+  background: rgba(5, 10, 18, 0.58);
+  backdrop-filter: blur(8px);
 }
 
 .drawer-panel {
-  width: min(760px, 100%);
-  min-height: 100vh;
-  max-height: 100vh;
+  width: min(900px, 100%);
+  max-height: calc(100vh - 48px);
   overflow: auto;
-  padding: 22px 24px 0;
+  padding: 0;
+  border: 1px solid #d7eaf6;
+  border-radius: 12px;
   background: #fff;
-  box-shadow: -20px 0 50px rgba(20, 40, 72, 0.15);
+  box-shadow: 0 28px 80px rgba(7, 19, 38, 0.24);
 }
 
 .drawer-head {
@@ -541,18 +561,22 @@ tbody tr:last-child td {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin: -22px -24px 0;
-  padding: 18px 24px;
+  padding: 24px 26px;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
+}
+
+.drawer-head h2 {
+  font-size: 18px;
+  line-height: 1.2;
 }
 
 .deal-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 18px;
+  padding: 18px 26px 0;
 }
 
 .deal-form .wide,
@@ -564,11 +588,11 @@ tbody tr:last-child td {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px;
-  border: 1px solid #bfe8f4;
-  border-radius: 8px;
-  background: #f5fcff;
-  box-shadow: 0 14px 36px rgba(11, 184, 232, 0.08);
+  padding: 18px;
+  border: 1px solid #cceffd;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fdff 100%);
+  box-shadow: 0 10px 28px rgba(11, 184, 232, 0.08);
 }
 
 .summary-pair {
@@ -582,7 +606,23 @@ tbody tr:last-child td {
   font-size: 18px;
 }
 
-.summary-pair span:last-child,
+.trade-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.trade-badges span {
+  min-height: 22px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: #05a978;
+  background: #dff9ee;
+  font-size: 11px;
+  font-weight: 900;
+}
+
 .summary-metrics span {
   color: var(--muted);
   font-size: 12px;
@@ -599,20 +639,24 @@ tbody tr:last-child td {
 .summary-metrics div {
   display: grid;
   gap: 4px;
+  min-width: 82px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fbff;
 }
 
 .summary-metrics strong {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .form-section {
   display: grid;
   gap: 14px;
   padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 12px 32px rgba(26, 55, 97, 0.06);
+  border: 1px solid #cceffd;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #fbfdff 100%);
+  box-shadow: 0 10px 26px rgba(26, 55, 97, 0.04);
 }
 
 .section-title {
@@ -623,14 +667,30 @@ tbody tr:last-child td {
   font-size: 13px;
 }
 
+.section-title.with-action {
+  justify-content: space-between;
+}
+
+.section-title.with-action > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .section-title span {
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
   color: var(--blue-dark);
   background: #e9faff;
+}
+
+.secondary-button.compact {
+  min-width: 84px;
+  height: 34px;
+  padding: 0 12px;
 }
 
 .form-grid {
@@ -701,18 +761,18 @@ tbody tr:last-child td {
 }
 
 .segmented-control button {
-  min-height: 38px;
-  border: 1px solid var(--line);
+  min-height: 44px;
+  border: 1px solid #cce4f8;
   border-radius: 8px;
   color: #53637a;
-  background: #fff;
+  background: #fdfefe;
   font-weight: 900;
 }
 
 .segmented-control button.selected.green {
   color: #fff;
-  background: var(--green);
-  border-color: var(--green);
+  background: linear-gradient(135deg, #19c892 0%, #05a978 100%);
+  border-color: #05a978;
   box-shadow: 0 10px 24px rgba(22, 185, 129, 0.22);
 }
 
@@ -723,6 +783,44 @@ tbody tr:last-child td {
 }
 
 .segmented-control button.selected.red {
+  color: #fff;
+  background: var(--red);
+  border-color: var(--red);
+}
+
+.link-list {
+  display: grid;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid #cceffd;
+  border-radius: 10px;
+  background: #fbfdff;
+}
+
+.link-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(260px, 2fr) 42px;
+  gap: 8px;
+  align-items: center;
+}
+
+.link-row input {
+  background: #f9fbff;
+}
+
+.danger-icon-button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #ffd2d2;
+  border-radius: 8px;
+  color: var(--red);
+  background: #fff0f0;
+  font-weight: 900;
+}
+
+.danger-icon-button:hover {
   color: #fff;
   background: var(--red);
   border-color: var(--red);
@@ -786,8 +884,9 @@ tbody tr:last-child td {
   justify-content: space-between;
   align-items: center;
   gap: 16px;
-  margin: 4px -24px 0;
-  padding: 14px 24px;
+  grid-column: 1 / -1;
+  margin: 4px -26px 0;
+  padding: 18px 26px;
   border-top: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
@@ -797,7 +896,9 @@ tbody tr:last-child td {
 }
 
 .drawer-actions .primary-button {
-  min-width: 112px;
+  min-width: 104px;
+  background: #0bb8e8;
+  border-color: #0bb8e8;
 }
 
 .pairs-layout {
@@ -917,5 +1018,13 @@ tbody tr:last-child td {
 
   .segmented-control {
     grid-template-columns: 1fr;
+  }
+
+  .link-row {
+    grid-template-columns: 1fr 42px;
+  }
+
+  .link-row input:first-child {
+    grid-column: 1 / -1;
   }
 }

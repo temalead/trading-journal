@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { AuthSession, login, register } from "./api/auth";
-import { createDeal, Deal, getDeals, uploadDealImages } from "./api/deals";
+import { createDeal, Deal, deleteDeal, getDeals, uploadDealImages, updateDeal } from "./api/deals";
 import { createPair, getPairs, TickerPair } from "./api/pairs";
 import { AuthPage } from "./components/AuthPage";
 import { DealDrawer } from "./components/DealDrawer";
@@ -26,6 +26,7 @@ export function App() {
   const [session, setSession] = useState<AuthSession | null>(() => readStoredSession());
   const [search, setSearch] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingDeal, setEditingDeal] = useState<Deal | null>(null);
   const [dealForm, setDealForm] = useState<DealFormState>(initialDealForm);
   const [pairForm, setPairForm] = useState<PairFormState>(initialPairForm);
   const [authForm, setAuthForm] = useState<AuthFormState>({
@@ -52,7 +53,7 @@ export function App() {
   const filteredDeals = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return deals.filter((deal) => {
-      const value = [deal.ticker?.pairName, deal.currency, deal.description, deal.result]
+      const value = [deal.ticker?.pairName, deal.currency, deal.description, deal.result, deal.session]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -98,21 +99,25 @@ export function App() {
     }
 
     try {
-      const savedDeal = await createDeal(
-        {
-          tickerPairId: dealForm.tickerPairId,
-          userId: session.userId,
-          accountId: session.accountId,
-          deposit: numberToNull(dealForm.deposit),
-          currency: blankToNull(dealForm.currency),
-          openPrice: numberToNull(dealForm.openPrice),
-          closePrice: numberToNull(dealForm.closePrice),
-          riskReward: blankToNull(dealForm.riskReward),
-          result: dealForm.result,
-          description: blankToNull(dealForm.description),
-        },
-        session,
-      );
+      const payload = {
+        tickerPairId: dealForm.tickerPairId,
+        userId: session.userId,
+        accountId: session.accountId,
+        deposit: numberToNull(dealForm.deposit),
+        currency: blankToNull(dealForm.currency),
+        riskReward: blankToNull(dealForm.riskReward),
+        result: dealForm.result,
+        session: dealForm.session,
+        links: dealForm.links
+          .map((link) => ({ title: blankToNull(link.title), url: link.url.trim() }))
+          .filter((link) => link.url.length > 0),
+        description: blankToNull(dealForm.description),
+      };
+      const savedDeal =
+        editingDeal?.id
+          ? await updateDeal(editingDeal.id, session.userId, payload, session)
+          : await createDeal(payload, session);
+
       if (dealForm.imageFiles.length > 0) {
         if (!savedDeal.id) {
           throw new Error("Deal was saved without id");
@@ -121,8 +126,9 @@ export function App() {
       }
 
       setDrawerOpen(false);
+      setEditingDeal(null);
       setDealForm(initialDealForm);
-      showMessage("Deal saved");
+      showMessage(editingDeal ? "Deal updated" : "Deal saved");
       await refreshData();
     } catch (error) {
       showMessage(error instanceof Error ? error.message : "Unable to save deal");
@@ -190,11 +196,45 @@ export function App() {
       showMessage("Sign in first");
       return;
     }
-    setDealForm((current) => ({
-      ...current,
-      tickerPairId: current.tickerPairId || pairs.find((pair) => pair.id)?.id || "",
-    }));
+    setEditingDeal(null);
+    setDealForm({
+      ...initialDealForm,
+      tickerPairId: pairs.find((pair) => pair.id)?.id || "",
+    });
     setDrawerOpen(true);
+  }
+
+  function openEditDrawer(deal: Deal) {
+    if (!session) {
+      showMessage("Sign in first");
+      return;
+    }
+
+    setEditingDeal(deal);
+    setDealForm(dealToForm(deal));
+    setDrawerOpen(true);
+  }
+
+  async function removeDeal(deal: Deal) {
+    if (!session) {
+      showMessage("Sign in first");
+      return;
+    }
+    if (!deal.id) {
+      showMessage("Deal has no id");
+      return;
+    }
+    if (!window.confirm("Delete this deal?")) {
+      return;
+    }
+
+    try {
+      await deleteDeal(deal.id, session.userId, session);
+      showMessage("Deal deleted");
+      await refreshData();
+    } catch (error) {
+      showMessage(error instanceof Error ? error.message : "Unable to delete deal");
+    }
   }
 
   function showMessage(value: string) {
@@ -213,6 +253,22 @@ export function App() {
 
   function setPairFormValue<Key extends keyof PairFormState>(key: Key, value: PairFormState[Key]) {
     setPairForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function dealToForm(deal: Deal): DealFormState {
+    return {
+      tickerPairId: deal.ticker?.id ?? pairs.find((pair) => pair.pairName === deal.ticker?.pairName)?.id ?? "",
+      imageFiles: [],
+      currency: deal.currency ?? "",
+      deposit: deal.deposit == null ? "" : String(deal.deposit),
+      riskReward: deal.riskReward ?? "",
+      result: deal.result ?? "PROFIT",
+      session: deal.session ?? "london",
+      links: deal.links && deal.links.length > 0
+        ? deal.links.map((link) => ({ title: link.title ?? "", url: link.url }))
+        : [{ title: "", url: "" }],
+      description: deal.description ?? "",
+    };
   }
 
   if (!session) {
@@ -239,6 +295,8 @@ export function App() {
             deals={filteredDeals}
             loading={loading}
             onCreate={openCreateDrawer}
+            onDelete={removeDeal}
+            onEdit={openEditDrawer}
             onRefresh={() => refreshData()}
             search={search}
             setSearch={setSearch}
@@ -258,7 +316,12 @@ export function App() {
         {drawerOpen && (
           <DealDrawer
             dealForm={dealForm}
-            onClose={() => setDrawerOpen(false)}
+            mode={editingDeal ? "edit" : "create"}
+            onClose={() => {
+              setDrawerOpen(false);
+              setEditingDeal(null);
+              setDealForm(initialDealForm);
+            }}
             onSubmit={submitDeal}
             pairs={pairs}
             setDealFormValue={setDealFormValue}

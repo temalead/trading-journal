@@ -5,12 +5,14 @@ type DealsViewProps = {
   deals: Deal[];
   loading: boolean;
   onCreate: () => void;
+  onDelete: (deal: Deal) => void;
+  onEdit: (deal: Deal) => void;
   onRefresh: () => void;
   search: string;
   setSearch: (value: string) => void;
 };
 
-export function DealsView({ deals, loading, onCreate, onRefresh, search, setSearch }: DealsViewProps) {
+export function DealsView({ deals, loading, onCreate, onDelete, onEdit, onRefresh, search, setSearch }: DealsViewProps) {
   return (
     <>
       <section className="page-head">
@@ -56,20 +58,22 @@ export function DealsView({ deals, loading, onCreate, onRefresh, search, setSear
               <th>Date</th>
               <th>Side</th>
               <th>Pair</th>
+              <th>Session</th>
               <th>Result</th>
               <th>RR</th>
               <th>PnL</th>
               <th>Images</th>
               <th>Link</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {deals.length === 0 ? (
               <tr className="empty-row">
-                <td colSpan={8}>No deals yet.</td>
+                <td colSpan={10}>No deals yet.</td>
               </tr>
             ) : (
-              deals.map((deal) => <DealRow deal={deal} key={deal.id ?? deal.ticker?.pairName} />)
+              deals.map((deal) => <DealRow deal={deal} key={deal.id ?? deal.ticker?.pairName} onDelete={onDelete} onEdit={onEdit} />)
             )}
           </tbody>
         </table>

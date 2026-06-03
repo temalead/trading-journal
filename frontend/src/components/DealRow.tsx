@@ -1,8 +1,15 @@
 import { Deal } from "../api/deals";
-import { formatDate, formatPnl, pairInitials, resultView } from "../utils/format";
+import { externalHref, formatDate, formatPnl, formatSession, pairInitials, resultView } from "../utils/format";
 
-export function DealRow({ deal }: { deal: Deal }) {
+type DealRowProps = {
+  deal: Deal;
+  onDelete: (deal: Deal) => void;
+  onEdit: (deal: Deal) => void;
+};
+
+export function DealRow({ deal, onDelete, onEdit }: DealRowProps) {
   const view = resultView(deal.result);
+  const primaryLink = deal.links?.find((link) => link.url);
 
   return (
     <tr>
@@ -15,6 +22,9 @@ export function DealRow({ deal }: { deal: Deal }) {
           <span className="pair-icon">{pairInitials(deal.ticker?.pairName)}</span>
           <span>{deal.ticker?.pairName ?? "-"}</span>
         </div>
+      </td>
+      <td>
+        <span className="badge blue">{formatSession(deal.session)}</span>
       </td>
       <td>
         <span className={`badge ${view.className}`}>{view.label}</span>
@@ -40,9 +50,29 @@ export function DealRow({ deal }: { deal: Deal }) {
         )}
       </td>
       <td>
-        <button className="icon-button" title={deal.id}>
-          ↗
-        </button>
+        {primaryLink ? (
+          <a
+            className="icon-button link-action"
+            href={externalHref(primaryLink.url)}
+            rel="noreferrer"
+            target="_blank"
+            title={primaryLink.title || primaryLink.url}
+          >
+            ↗
+          </a>
+        ) : (
+          "-"
+        )}
+      </td>
+      <td>
+        <div className="row-actions">
+          <button className="icon-button" onClick={() => onEdit(deal)} type="button" aria-label="Edit deal" title="Edit deal">
+            ✎
+          </button>
+          <button className="icon-button danger" onClick={() => onDelete(deal)} type="button" aria-label="Delete deal" title="Delete deal">
+            ⌫
+          </button>
+        </div>
       </td>
     </tr>
   );

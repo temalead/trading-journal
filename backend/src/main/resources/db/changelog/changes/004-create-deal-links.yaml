@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-create-deal-links
+      author: anikulin
+      failOnError: true
+      preConditions:
+        - onFail: MARK_RAN
+        - "not":
+            - tableExists:
+                tableName: deal_links
+      changes:
+        - createTable:
+            tableName: deal_links
+            columns:
+              - column:
+                  name: deal_id
+                  type: varchar(36)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(255)
+              - column:
+                  name: url
+                  type: varchar(2048)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: deal_links
+            baseColumnNames: deal_id
+            referencedTableName: deal
+            referencedColumnNames: id
+            constraintName: fk_deal_links_deal
+            onDelete: CASCADE
+        - createIndex:
+            tableName: deal_links
+            indexName: idx_deal_links_deal_id
+            columns:
+              - column:
+                  name: deal_id

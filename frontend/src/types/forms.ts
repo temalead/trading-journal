@@ -1,4 +1,4 @@
-import { DealResult } from "../api/deals";
+import { DealResult, DealSession } from "../api/deals";
 
 export type Page = "deals" | "pairs";
 
@@ -7,11 +7,16 @@ export type DealFormState = {
   imageFiles: File[];
   currency: string;
   deposit: string;
-  openPrice: string;
-  closePrice: string;
   riskReward: string;
   result: DealResult;
+  session: DealSession;
+  links: DealLinkFormState[];
   description: string;
+};
+
+export type DealLinkFormState = {
+  title: string;
+  url: string;
 };
 
 export type PairFormState = {
@@ -31,10 +36,10 @@ export const initialDealForm: DealFormState = {
   imageFiles: [],
   currency: "USD",
   deposit: "",
-  openPrice: "",
-  closePrice: "",
   riskReward: "2.00R",
   result: "PROFIT",
+  session: "london",
+  links: [{ title: "", url: "" }],
   description: "",
 };
 

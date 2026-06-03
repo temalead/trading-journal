@@ -41,8 +41,9 @@ public class DealController {
     }
 
     @DeleteMapping
-    public ResponseEntity<Deal> delete(@RequestParam String dealId) {
-        dealService.delete(dealId);
+    public ResponseEntity<Deal> delete(@RequestParam String dealId,
+                                       @RequestParam String userId) {
+        dealService.delete(dealId, userId);
 
         return ResponseEntity.ok().build();
     }

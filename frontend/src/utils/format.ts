@@ -1,4 +1,4 @@
-import { Deal, DealResult } from "../api/deals";
+import { Deal, DealResult, DealSession } from "../api/deals";
 
 export function resultView(result?: DealResult | null) {
   if (result === "LOSS") {
@@ -14,11 +14,22 @@ export function formatDate(value?: string | null) {
   return value ? value.slice(0, 10) : "-";
 }
 
+export function formatSession(session?: DealSession | null) {
+  if (session === "new york") {
+    return "New York";
+  }
+  return session ? session.charAt(0).toUpperCase() + session.slice(1) : "-";
+}
+
+export function externalHref(url: string) {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 export function formatPnl(deal: Deal) {
-  if (deal.closePrice == null || deal.openPrice == null) {
+  if (deal.result == 'LOSS' || deal.result == 'BE') {
     return "-";
   }
-  const pnl = Number(deal.closePrice) - Number(deal.openPrice);
+  const pnl = Number(deal.deposit * deal.riskReward);
   return `${pnl > 0 ? "+" : ""}${pnl.toFixed(2)}`;
 }
 

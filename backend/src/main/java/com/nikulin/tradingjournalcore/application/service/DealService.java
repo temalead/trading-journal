@@ -99,16 +99,23 @@ public class DealService {
         deal.setTicker(tickerPairService.getByIdForUser(dealDto.getTickerPairId(), userId));
         deal.setCurrency(dealDto.getCurrency());
         deal.setRiskReward(dealDto.getRiskReward());
-        deal.setOpenPrice(dealDto.getOpenPrice());
-        deal.setClosePrice(dealDto.getClosePrice());
         deal.setDescription(dealDto.getDescription());
         deal.setResult(dealDto.getResult());
         deal.setDeposit(dealDto.getDeposit());
+        deal.setSession(dealDto.getSession());
+        deal.setLinks(dealDto.getLinks());
 
         return dealRepository.save(deal);
     }
 
-    public void delete(String dealId) {
-        dealRepository.deleteById(dealId);
+    public void delete(String dealId, String userId) {
+        validateUserId(userId);
+        var deal = dealRepository.findById(dealId)
+                .orElseThrow(() -> new IllegalArgumentException("Deal not found: " + dealId));
+        if (!Objects.equals(deal.getUserId(), userId)) {
+            throw new IllegalArgumentException("Deal does not belong to user: " + dealId);
+        }
+
+        dealRepository.delete(deal);
     }
 }

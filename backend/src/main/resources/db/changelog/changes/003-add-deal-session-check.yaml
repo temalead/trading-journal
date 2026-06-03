@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-add-deal-session-check
+      author: anikulin
+      failOnError: true
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: deal
+      changes:
+        - sql:
+            sql: |
+              update deal
+              set session = lower(trim(session))
+              where session is not null;
+
+              update deal
+              set session = 'new york'
+              where session in ('new_york', 'new-york', 'newyork');
+
+              update deal
+              set session = null
+              where session is not null
+                and session not in ('london', 'frankfurt', 'asia', 'new york');
+
+              alter table deal
+                  drop constraint if exists ck_deal_session;
+
+              alter table deal
+                  add constraint ck_deal_session
+                  check (session is null or session in ('london', 'frankfurt', 'asia', 'new york'));

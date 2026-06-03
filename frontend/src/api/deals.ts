@@ -2,6 +2,12 @@ import { AuthSession } from "./auth";
 import { authHeaders } from "./request";
 
 export type DealResult = "PROFIT" | "BE" | "LOSS";
+export type DealSession = "london" | "frankfurt" | "asia" | "new york";
+
+export type DealLink = {
+  title?: string | null;
+  url: string;
+};
 
 export type TickerPair = {
   id?: string;
@@ -16,12 +22,12 @@ export type Deal = {
   imageUrls?: string[];
   deposit?: number | null;
   currency?: string | null;
-  openPrice?: number | null;
-  closePrice?: number | null;
   riskReward?: string | null;
   description?: string | null;
   createdAt?: string | null;
   result?: DealResult | null;
+  session?: DealSession | null;
+  links?: DealLink[];
 };
 
 export type CreateDealPayload = {
@@ -30,11 +36,11 @@ export type CreateDealPayload = {
   accountId: string;
   deposit: number | null;
   currency: string | null;
-  openPrice: number | null;
-  closePrice: number | null;
   riskReward: string | null;
   description: string | null;
   result: DealResult;
+  session: DealSession;
+  links: DealLink[];
 };
 
 export async function getDeals(userId: string, accountId: string | undefined, session: AuthSession): Promise<Deal[]> {
@@ -70,6 +76,36 @@ export async function createDeal(payload: CreateDealPayload, session: AuthSessio
   }
 
   return response.json() as Promise<Deal>;
+}
+
+export async function updateDeal(dealId: string, userId: string, payload: CreateDealPayload, session: AuthSession): Promise<Deal> {
+  const params = new URLSearchParams({ dealId, userId });
+  const response = await fetch(`/api/deal?${params.toString()}`, {
+    method: "PUT",
+    headers: {
+      ...authHeaders(session),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
+  return response.json() as Promise<Deal>;
+}
+
+export async function deleteDeal(dealId: string, userId: string, session: AuthSession): Promise<void> {
+  const params = new URLSearchParams({ dealId, userId });
+  const response = await fetch(`/api/deal?${params.toString()}`, {
+    method: "DELETE",
+    headers: authHeaders(session),
+  });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
 }
 
 export async function uploadDealImages(

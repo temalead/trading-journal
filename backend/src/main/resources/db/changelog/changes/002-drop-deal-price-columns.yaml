@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-drop-deal-open-price
+      author: anikulin
+      failOnError: true
+      preConditions:
+        - onFail: MARK_RAN
+        - columnExists:
+            tableName: deal
+            columnName: open_price
+      changes:
+        - dropColumn:
+            tableName: deal
+            columnName: open_price
+
+  - changeSet:
+      id: 008-drop-deal-close-price
+      author: anikulin
+      failOnError: true
+      preConditions:
+        - onFail: MARK_RAN
+        - columnExists:
+            tableName: deal
+            columnName: close_price
+      changes:
+        - dropColumn:
+            tableName: deal
+            columnName: close_price

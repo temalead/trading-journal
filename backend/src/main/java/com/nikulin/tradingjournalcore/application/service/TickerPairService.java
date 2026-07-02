@@ -12,6 +12,12 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class TickerPairService {
+    private static final List<DefaultPair> DEFAULT_PAIRS = List.of(
+            new DefaultPair("EURUSD", "EU"),
+            new DefaultPair("GBPUSD", "GB"),
+            new DefaultPair("US30", "US"),
+            new DefaultPair("GER40", "DE")
+    );
 
     private final TickerPairRepository repository;
 
@@ -26,7 +32,9 @@ public class TickerPairService {
 
     public List<TickerPair> getPairs(String userId) {
         validateUserId(userId);
-        return repository.findAllByUserIdOrderByPairNameAsc(userId);
+        var normalizedUserId = userId.trim();
+        ensureDefaultPairs(normalizedUserId);
+        return repository.findAllByUserIdOrderByPairNameAsc(normalizedUserId);
     }
 
     public TickerPair getByIdForUser(String pairId, String userId) {
@@ -66,5 +74,15 @@ public class TickerPairService {
         if (tickerPair.getIcon() != null && tickerPair.getIcon().isBlank()) {
             tickerPair.setIcon(null);
         }
+    }
+
+    private void ensureDefaultPairs(String userId) {
+        DEFAULT_PAIRS.forEach(defaultPair ->
+                repository.findByUserIdAndPairNameIgnoreCase(userId, defaultPair.pairName())
+                        .orElseGet(() -> repository.save(new TickerPair(userId, defaultPair.pairName(), defaultPair.icon())))
+        );
+    }
+
+    private record DefaultPair(String pairName, String icon) {
     }
 }

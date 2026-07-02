@@ -7,6 +7,7 @@ import com.nikulin.tradingjournalcore.domain.entity.TickerPair;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,7 @@ public class DealDto {
     private BigDecimal deposit;
     private String currency;
     private String riskReward;
+    private LocalDate openedAt;
     private String description;
     private LocalDateTime createdAt;
     private DealResult result;

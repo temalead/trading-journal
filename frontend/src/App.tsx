@@ -106,6 +106,7 @@ export function App() {
         deposit: numberToNull(dealForm.deposit),
         currency: blankToNull(dealForm.currency),
         riskReward: blankToNull(dealForm.riskReward),
+        openedAt: dealForm.openedAt,
         result: dealForm.result,
         session: dealForm.session,
         links: dealForm.links
@@ -262,6 +263,7 @@ export function App() {
       currency: deal.currency ?? "",
       deposit: deal.deposit == null ? "" : String(deal.deposit),
       riskReward: deal.riskReward ?? "",
+      openedAt: deal.openedAt ?? deal.createdAt?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
       result: deal.result ?? "PROFIT",
       session: deal.session ?? "london",
       links: deal.links && deal.links.length > 0
@@ -285,10 +287,10 @@ export function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar page={page} onCreateDeal={openCreateDrawer} onSignOut={signOut} setPage={setPage} />
+      <Sidebar page={page} onCreateDeal={openCreateDrawer} setPage={setPage} />
 
       <main className="workspace">
-        <Topbar session={session} />
+        <Topbar session={session} onSignOut={signOut} />
 
         {page === "deals" ? (
           <DealsView

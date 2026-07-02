@@ -4,11 +4,10 @@ import { NavButton } from "./NavButton";
 type SidebarProps = {
   page: Page;
   onCreateDeal: () => void;
-  onSignOut: () => void;
   setPage: (page: Page) => void;
 };
 
-export function Sidebar({ page, onCreateDeal, onSignOut, setPage }: SidebarProps) {
+export function Sidebar({ page, onCreateDeal, setPage }: SidebarProps) {
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -49,9 +48,6 @@ export function Sidebar({ page, onCreateDeal, onSignOut, setPage }: SidebarProps
       <div className="sidebar-bottom">
         <NavButton label="Updates" />
         <NavButton label="Settings" />
-        <button className="nav-button" onClick={onSignOut}>
-          Sign Out
-        </button>
       </div>
     </aside>
   );

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,6 +31,7 @@ public class DealService {
         validateUserId(userId);
 
         var user = userService.getById(userId);
+        normalizeOpenedAt(dealDto);
         var deal = new Deal(dealDto);
         deal.setTicker(tickerPairService.getByIdForUser(dealDto.getTickerPairId(), userId));
         user.addDeal(deal);
@@ -103,6 +105,7 @@ public class DealService {
         deal.setResult(dealDto.getResult());
         deal.setDeposit(dealDto.getDeposit());
         deal.setSession(dealDto.getSession());
+        deal.setOpenedAt(dealDto.getOpenedAt() == null ? LocalDate.now() : dealDto.getOpenedAt());
         deal.setLinks(dealDto.getLinks());
 
         return dealRepository.save(deal);
@@ -117,5 +120,11 @@ public class DealService {
         }
 
         dealRepository.delete(deal);
+    }
+
+    private void normalizeOpenedAt(DealDto dealDto) {
+        if (dealDto.getOpenedAt() == null) {
+            dealDto.setOpenedAt(LocalDate.now());
+        }
     }
 }

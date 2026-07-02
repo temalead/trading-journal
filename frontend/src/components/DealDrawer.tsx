@@ -89,6 +89,13 @@ export function DealDrawer({ dealForm, mode, pairs, onClose, onSubmit, setDealFo
               <strong>Инфо о сделке</strong>
             </div>
             <div className="form-grid">
+              <Field
+                label="Open Date"
+                value={dealForm.openedAt}
+                onChange={(value) => setDealFormValue("openedAt", value)}
+                type="date"
+                required
+              />
               <label className="wide">
                 Пара
                 <select

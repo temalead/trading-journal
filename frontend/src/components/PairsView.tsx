@@ -23,6 +23,14 @@ export function PairsView({
   setSearch,
   submitPair,
 }: PairsViewProps) {
+  const pairNamePreview = pairForm.pairName.trim().toUpperCase() || "EURUSD";
+  const iconPreview = pairForm.icon.trim() || pairInitials(pairNamePreview);
+
+  function applyPreset(pairName: string, icon: string) {
+    setPairFormValue("pairName", pairName);
+    setPairFormValue("icon", icon);
+  }
+
   return (
     <>
       <section className="page-head">
@@ -34,10 +42,38 @@ export function PairsView({
 
       <section className="pairs-layout">
         <form className="pair-form" onSubmit={submitPair}>
-          <Field label="Pair Name" value={pairForm.pairName} onChange={(value) => setPairFormValue("pairName", value)} required />
-          <Field label="Icon" value={pairForm.icon} onChange={(value) => setPairFormValue("icon", value)} />
+          <div className="pair-form-head">
+            <div>
+              <h2>Add Pair</h2>
+              <span>{pairs.length} available</span>
+            </div>
+            <div className="pair-preview">
+              <span className="pair-icon">{iconPreview}</span>
+              <strong>{pairNamePreview}</strong>
+            </div>
+          </div>
+
+          <div className="quick-pair-row" aria-label="Default pairs">
+            {defaultPairPresets.map((pair) => (
+              <button
+                className="quick-pair"
+                key={pair.pairName}
+                onClick={() => applyPreset(pair.pairName, pair.icon)}
+                type="button"
+              >
+                <span>{pair.icon}</span>
+                {pair.pairName}
+              </button>
+            ))}
+          </div>
+
+          <div className="pair-form-fields">
+            <Field label="Symbol" value={pairForm.pairName} onChange={(value) => setPairFormValue("pairName", value)} required />
+            <Field label="Badge" value={pairForm.icon} onChange={(value) => setPairFormValue("icon", value)} />
+          </div>
+
           <button className="primary-button" disabled={loading} type="submit">
-            Save Pair
+            {loading ? "Saving..." : "Add Pair"}
           </button>
         </form>
 
@@ -61,7 +97,10 @@ export function PairsView({
               pairs.map((pair) => (
                 <article className="pair-card" key={pair.id ?? pair.pairName}>
                   <span className="pair-icon">{pair.icon || pairInitials(pair.pairName)}</span>
-                  <strong>{pair.pairName}</strong>
+                  <div>
+                    <strong>{pair.pairName}</strong>
+                    <span>Ready</span>
+                  </div>
                 </article>
               ))
             )}
@@ -71,3 +110,10 @@ export function PairsView({
     </>
   );
 }
+
+const defaultPairPresets = [
+  { pairName: "EURUSD", icon: "EU" },
+  { pairName: "GBPUSD", icon: "GB" },
+  { pairName: "US30", icon: "US" },
+  { pairName: "GER40", icon: "DE" },
+];

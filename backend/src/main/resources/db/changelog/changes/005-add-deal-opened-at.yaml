@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 011-add-deal-opened-at
+      author: anikulin
+      failOnError: true
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: deal
+        - "not":
+            - columnExists:
+                tableName: deal
+                columnName: opened_at
+      changes:
+        - addColumn:
+            tableName: deal
+            columns:
+              - column:
+                  name: opened_at
+                  type: date
+        - sql:
+            sql: |
+              update deal
+              set opened_at = coalesce(cast(created_at as date), current_date)
+              where opened_at is null;
+        - addNotNullConstraint:
+            tableName: deal
+            columnName: opened_at
+            columnDataType: date
+        - createIndex:
+            tableName: deal
+            indexName: idx_deal_opened_at
+            columns:
+              - column:
+                  name: opened_at

@@ -14,6 +14,10 @@ export function formatDate(value?: string | null) {
   return value ? value.slice(0, 10) : "-";
 }
 
+export function dealDateKey(deal: Deal) {
+  return deal.openedAt?.slice(0, 10) ?? deal.createdAt?.slice(0, 10) ?? "";
+}
+
 export function formatSession(session?: DealSession | null) {
   if (session === "new york") {
     return "New York";
@@ -26,11 +30,48 @@ export function externalHref(url: string) {
 }
 
 export function formatPnl(deal: Deal) {
-  if (deal.result == 'LOSS' || deal.result == 'BE') {
+  if (deal.result === "LOSS" || deal.result === "BE") {
     return "-";
   }
-  const pnl = Number(deal.deposit * deal.riskReward);
+  const deposit = Number(deal.deposit);
+  const riskReward = parseRiskReward(deal.riskReward);
+  if (!Number.isFinite(deposit) || !Number.isFinite(riskReward)) {
+    return "-";
+  }
+
+  const pnl = deposit * riskReward;
   return `${pnl > 0 ? "+" : ""}${pnl.toFixed(2)}`;
+}
+
+export function formatProfitPercent(deal: Deal) {
+  const percent = profitPercent(deal);
+  if (percent == null) {
+    return "-";
+  }
+  return `${percent > 0 ? "+" : ""}${percent.toFixed(percent % 1 === 0 ? 0 : 1)}%`;
+}
+
+export function profitPercent(deal: Deal) {
+  if (deal.result === "BE") {
+    return 0;
+  }
+  if (deal.result === "LOSS") {
+    return -1;
+  }
+
+  const riskReward = parseRiskReward(deal.riskReward);
+  if (!Number.isFinite(riskReward)) {
+    return null;
+  }
+  return riskReward;
+}
+
+export function parseRiskReward(value?: string | null) {
+  if (value == null) {
+    return Number.NaN;
+  }
+  const normalized = value.replace(",", ".").replace(/[^0-9.-]/g, "");
+  return normalized ? Number(normalized) : Number.NaN;
 }
 
 export function pairInitials(pairName?: string | null) {

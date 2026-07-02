@@ -23,6 +23,7 @@ export type Deal = {
   deposit?: number | null;
   currency?: string | null;
   riskReward?: string | null;
+  openedAt?: string | null;
   description?: string | null;
   createdAt?: string | null;
   result?: DealResult | null;
@@ -37,6 +38,7 @@ export type CreateDealPayload = {
   deposit: number | null;
   currency: string | null;
   riskReward: string | null;
+  openedAt: string;
   description: string | null;
   result: DealResult;
   session: DealSession;

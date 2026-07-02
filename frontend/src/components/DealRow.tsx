@@ -1,5 +1,5 @@
 import { Deal } from "../api/deals";
-import { externalHref, formatDate, formatPnl, formatSession, pairInitials, resultView } from "../utils/format";
+import { dealDateKey, externalHref, formatDate, formatPnl, formatSession, pairInitials, resultView } from "../utils/format";
 
 type DealRowProps = {
   deal: Deal;
@@ -13,7 +13,7 @@ export function DealRow({ deal, onDelete, onEdit }: DealRowProps) {
 
   return (
     <tr>
-      <td>{formatDate(deal.createdAt)}</td>
+      <td>{formatDate(dealDateKey(deal))}</td>
       <td>
         <span className={`badge ${view.sideClass}`}>{view.side}</span>
       </td>

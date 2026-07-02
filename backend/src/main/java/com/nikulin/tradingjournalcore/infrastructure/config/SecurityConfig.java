@@ -39,8 +39,9 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/deal/**", "/pair/**").authenticated()
+                        .requestMatchers("/auth/**", "/api/auth/**").permitAll()
+                        .requestMatchers("/deal/**", "/pair/**", "/accounts/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/deal/**", "/api/pair/**", "/api/accounts/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().denyAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

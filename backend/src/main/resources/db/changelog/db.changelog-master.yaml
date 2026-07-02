@@ -7,3 +7,5 @@ databaseChangeLog:
       file: db/changelog/changes/003-add-deal-session-check.yaml
   - include:
       file: db/changelog/changes/004-create-deal-links.yaml
+  - include:
+      file: db/changelog/changes/005-add-deal-opened-at.yaml

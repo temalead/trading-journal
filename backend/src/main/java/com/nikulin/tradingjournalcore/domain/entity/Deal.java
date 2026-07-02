@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +29,8 @@ public class Deal extends AbstractEntity {
     private String currency;
     @Column(nullable = false)
     private String riskReward;
+    @Column(nullable = false)
+    private LocalDate openedAt;
     private String description;
     private BigDecimal risk;
     private DealSession session;
@@ -60,6 +63,7 @@ public class Deal extends AbstractEntity {
         this.currency = dealDto.getCurrency();
         this.session = dealDto.getSession();
         this.riskReward = dealDto.getRiskReward();
+        this.openedAt = dealDto.getOpenedAt();
         this.description = dealDto.getDescription();
         this.result = dealDto.getResult();
         setLinks(dealDto.getLinks());

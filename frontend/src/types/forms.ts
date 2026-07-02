@@ -8,6 +8,7 @@ export type DealFormState = {
   currency: string;
   deposit: string;
   riskReward: string;
+  openedAt: string;
   result: DealResult;
   session: DealSession;
   links: DealLinkFormState[];
@@ -37,6 +38,7 @@ export const initialDealForm: DealFormState = {
   currency: "USD",
   deposit: "",
   riskReward: "2.00R",
+  openedAt: todayInputValue(),
   result: "PROFIT",
   session: "london",
   links: [{ title: "", url: "" }],
@@ -47,3 +49,7 @@ export const initialPairForm: PairFormState = {
   pairName: "",
   icon: "",
 };
+
+function todayInputValue() {
+  return new Date().toISOString().slice(0, 10);
+}
